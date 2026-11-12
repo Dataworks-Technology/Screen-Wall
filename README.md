@@ -57,6 +57,8 @@ Faults are written to `screen-wall.log` in the settings folder.
 
 ## When a feed freezes
 
+The downloaded log starts with a reading of the laptop taken at that moment: whether graphics acceleration is on, each display's resolution, the frames per second each page is managing, and how hard each of the app's processes is working. Download it while the wall is being slow.
+
 The log says which kind of freeze it was. Download it from **Settings → Fault log** on the control page, from any device; on the laptop it is `screen-wall.log` in the settings folder.
 
 | What the log shows at the time of the freeze                | What it means                                                                                 |

@@ -1,5 +1,5 @@
 // The control page and its small JSON API, served over the LAN.
-const { app } = require("electron");
+const { app, powerMonitor, screen } = require("electron");
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const http = require("node:http");
@@ -79,6 +79,37 @@ function state() {
   };
 }
 
+// What is needed to see why a laptop is slow without sitting in front of it.
+// Goes at the top of the downloaded log.
+async function diagnostics() {
+  app.getAppMetrics(); // start the clock: the next call reports CPU use since this one
+  const rates = await screens.frameRates(); // takes two seconds
+  const gpu = await app.getGPUInfo("basic").catch(() => ({}));
+  return {
+    version: app.getVersion(),
+    electron: process.versions.electron,
+    system: `${os.type()} ${os.release()}`,
+    processor: `${os.cpus()[0].model.trim()} x${os.cpus().length}`,
+    memoryGB: Math.round(os.totalmem() / 2 ** 30),
+    onBattery: powerMonitor.isOnBatteryPower(),
+    graphics: app.getGPUFeatureStatus(), // "software" or "disabled" here means no graphics acceleration
+    graphicsCards: gpu.gpuDevice,
+    displays: screen.getAllDisplays().map((d) => ({
+      label: d.label,
+      pixels: `${Math.round(d.size.width * d.scaleFactor)}x${Math.round(d.size.height * d.scaleFactor)}`,
+      scale: d.scaleFactor,
+      hz: d.displayFrequency,
+      internal: d.internal,
+    })),
+    screens: rates,
+    processes: app.getAppMetrics().map((p) => ({
+      type: p.name || p.type,
+      cpuPercent: Math.round(p.cpu.percentCPUUsage * 10) / 10, // over the two seconds just measured
+      memoryMB: Math.round(p.memory.workingSetSize / 1024),
+    })),
+  };
+}
+
 // POST /api/<name> with a JSON body.
 const actions = {
   screen: (body) => screens.update(body.key, body),
@@ -142,7 +173,7 @@ const server = http.createServer(async (req, res) => {
       return reply(
         res,
         200,
-        await fs.promises.readFile(LOG_FILE).catch(() => ""),
+        `${JSON.stringify(await diagnostics(), null, 2)}\n\n${await fs.promises.readFile(LOG_FILE, "utf8").catch(() => "")}`,
         "text/plain; charset=utf-8",
       );
     if (req.method === "GET" && pathname === "/api/snapshot")

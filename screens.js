@@ -424,6 +424,35 @@ function pointer(key, { x, y, click, leave }) {
   wc.sendInputEvent({ type: "mouseUp", ...at, button: "left", clickCount: 1 });
 }
 
+// How smoothly each page is drawing right now: the frames it produced per
+// second over two seconds. null where there is no page to measure.
+async function frameRates() {
+  const count = `new Promise((done) => {
+    let frames = 0, counting = true;
+    const tick = () => { frames++; if (counting) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+    setTimeout(() => { counting = false; done(frames / 2); }, 2000);
+  })`;
+  const giveUp = new Promise((done) => setTimeout(done, 5000, null));
+  return Promise.all(
+    cfg.screens.map(async (s) => {
+      const r = rt(s.key);
+      const measurable = r.win && !r.win.isDestroyed() && r.status === "ok";
+      return {
+        screen: titleOf(s),
+        status: r.status,
+        connected: connected.has(s.key),
+        fps: measurable
+          ? await Promise.race([
+              r.win.webContents.executeJavaScript(count).catch(() => null),
+              giveUp,
+            ])
+          : null,
+      };
+    }),
+  );
+}
+
 // Shows each display's name on the display itself, so you can tell the outputs apart.
 function identify() {
   const control = controlUrls().join("  ");
@@ -459,4 +488,5 @@ module.exports = {
   identify,
   snapshot,
   pointer,
+  frameRates,
 };
