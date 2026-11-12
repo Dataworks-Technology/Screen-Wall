@@ -72,6 +72,8 @@ When a live video stops, two `video stalled … WebRTC:` lines are written twent
 | `keyFramesRequested` rose, `keyFramesDecoded` did not             | The decoder lost its place and asked the sender to start afresh, and the sender never did.             |
 | `framesDecoded` kept rising, or there is no `stalled` line at all | Frames were decoded but never reached the display: graphics, or the display adaptor's driver.          |
 
+Each `stalled` line also gives `connection` and `ice` (a feed whose network path broke reads `disconnected`, then `failed`) and `route` (whether the video came straight from the sender or through a relay, over UDP or TCP). Around the same time, look for `internet stopped answering` and `network addresses changed`: the app checks every five seconds and writes both down, so a freeze that lines up with either is the laptop's network, not the feed.
+
 `GPU process gone` in the log means the graphics driver fell over. `"trackMuted"` in the `video froze` line is not a reliable sign either way.
 
 To test the decoder or graphics, quit Screen Wall and start it by hand with a switch, to see whether the freeze goes away: `--disable-accelerated-video-decode` (decodes video in software), then `--disable-direct-composition-video-overlays` (stops full-screen video taking a short cut to the display).

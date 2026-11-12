@@ -25,6 +25,19 @@ contextBridge.executeInMainWorld({
     const read = (stats) => {
       const reading = { bytes: 0, video: [] };
       for (const s of stats.values()) {
+        // The route the video is taking: straight to the sender or through a relay, over UDP or TCP.
+        if (s.type === "transport" && s.selectedCandidatePairId) {
+          const pair = stats.get(s.selectedCandidatePairId) || {};
+          const local = stats.get(pair.localCandidateId) || {};
+          const remote = stats.get(pair.remoteCandidateId) || {};
+          reading.route = {
+            protocol: local.protocol,
+            local: local.candidateType,
+            remote: remote.candidateType,
+            relayedOver: local.relayProtocol,
+            roundTripMs: Math.round((pair.currentRoundTripTime || 0) * 1000),
+          };
+        }
         if (s.type !== "inbound-rtp") continue;
         reading.bytes += s.bytesReceived || 0;
         if (s.kind === "video")
