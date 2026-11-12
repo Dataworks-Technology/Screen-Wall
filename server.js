@@ -3,6 +3,7 @@ const { app, powerMonitor, screen } = require("electron");
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const http = require("node:http");
+const net = require("node:net");
 const os = require("node:os");
 const path = require("node:path");
 const {
@@ -103,6 +104,43 @@ function measureDownload() {
         ? ((bytes - before.bytes) * 8) / (now - before.at) / 1000
         : null;
   });
+}
+
+// A live feed dies when the laptop's network path changes under it, so note in
+// the log when the laptop's addresses change and when the internet stops
+// answering (a connection to a public server that does not open within three
+// seconds), and for how long.
+let knownAddresses = null;
+let silentSince = null;
+function watchNetwork() {
+  const now = addresses()
+    .map((a) => `${a.address} (${a.name})`)
+    .join(", ");
+  if (knownAddresses !== null && now !== knownAddresses)
+    log(
+      `network addresses changed: ${knownAddresses || "none"} -> ${now || "none"}`,
+    );
+  knownAddresses = now;
+
+  const socket = net.connect({ host: "1.1.1.1", port: 443, timeout: 3000 });
+  const finish = (answered) => {
+    socket.removeAllListeners();
+    socket.on("error", () => {});
+    socket.destroy();
+    if (!answered && silentSince === null) {
+      silentSince = Date.now();
+      log("internet stopped answering");
+    }
+    if (answered && silentSince !== null) {
+      log(
+        `internet answering again after ${Math.round((Date.now() - silentSince) / 1000)}s`,
+      );
+      silentSince = null;
+    }
+  };
+  socket.once("connect", () => finish(true));
+  socket.once("timeout", () => finish(false));
+  socket.once("error", () => finish(false));
 }
 
 // What is needed to see why a laptop is slow without sitting in front of it.
@@ -245,6 +283,7 @@ function start() {
     if (server.listening && bound !== bindHost()) rebind();
     measureDownload();
   }, 10000);
+  setInterval(watchNetwork, 5000);
 }
 server.on("listening", () => log("control page:", controlUrls().join(" ")));
 server.on("error", (e) => {
