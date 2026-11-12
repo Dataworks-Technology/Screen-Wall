@@ -13,15 +13,16 @@ It is one Electron app: Chromium renders each output in its own borderless full-
 
 Each card says what its screen is doing (Showing, Loading, Retrying, Black, Not in use, Unplugged) and what is on it now.
 
-| Control      | What it does                                                             |
-| ------------ | ------------------------------------------------------------------------ |
-| Show         | Shows the web page full screen. `https://` is added if you leave it out. |
-| Reload page  | Loads the page again.                                                    |
-| Black screen | Keeps the screen covered, showing black.                                 |
-| Stop showing | Closes the page and lets the laptop's desktop show on that screen.       |
-| Play sound   | Every screen starts silent. Tick it on the one that should carry sound.  |
-| Rename       | Names the screen. The name appears on the card and when identifying.     |
-| Forget       | Removes an unplugged screen that still has a page saved against it.      |
+| Control                        | What it does                                                                                                                        |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Show                           | Shows the web page full screen. `https://` is added if you leave it out.                                                            |
+| Reload page                    | Loads the page again.                                                                                                               |
+| Black screen                   | Keeps the screen covered, showing black.                                                                                            |
+| Stop showing                   | Closes the page and lets the laptop's desktop show on that screen.                                                                  |
+| Play sound                     | Every screen starts silent. Tick it on the one that should carry sound.                                                             |
+| Fill the screen with the video | For a page that is a video player: puts its video into full screen, as the player's own button would, and again after every reload. |
+| Rename                         | Names the screen. The name appears on the card and when identifying.                                                                |
+| Forget                         | Removes an unplugged screen that still has a page saved against it.                                                                 |
 
 **Remote control** (on a card that is showing a page) opens a picture of that screen, updated about once a second. Moving over the picture and clicking does the same on the page, which is how you press a page's own full-screen or play button from another device. It passes on the mouse only, not the keyboard.
 

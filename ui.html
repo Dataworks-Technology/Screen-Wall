@@ -207,8 +207,7 @@
         outline: 2px solid var(--accent);
         outline-offset: 2px;
       }
-      label.sound {
-        margin-left: auto;
+      label.option {
         display: flex;
         gap: 6px;
         align-items: center;
@@ -673,7 +672,11 @@
           >
             Forget this screen
           </button>
-          <label class="sound"
+          <label class="option fill"
+            ><input type="checkbox" class="fill-on" /> Fill the screen with the
+            video</label
+          >
+          <label class="option sound"
             ><input type="checkbox" class="sound-on" /> Play sound
             <span class="dim sound-state"></span
           ></label>
@@ -908,6 +911,9 @@
           if (await act("screen", { key, name: $(".name", el).value }))
             renaming(false);
         });
+        $(".fill-on", el).addEventListener("change", (e) =>
+          act("screen", { key, fill: e.target.checked }),
+        );
         $(".sound-on", el).addEventListener("change", (e) =>
           act("screen", { key, muted: !e.target.checked }),
         );
@@ -960,6 +966,7 @@
             if (document.activeElement !== url) url.value = s.url || "";
           }
           $(".sound-on", el).checked = s.muted === false;
+          $(".fill-on", el).checked = !!s.fill;
           // With sound ticked, say whether the page is actually making any.
           $(".sound-state", el).textContent =
             s.muted !== false
@@ -976,6 +983,7 @@
           $("[data-act=off]", el).hidden = d.mode === "unused";
           $("[data-act=forget]", el).hidden = s.connected;
           $(".sound", el).hidden = !page;
+          $(".fill", el).hidden = !page;
         }
       }
 
