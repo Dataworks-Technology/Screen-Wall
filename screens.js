@@ -36,41 +36,24 @@ const LIVE_VIDEOS = `[...document.querySelectorAll("video")]
     };
   })`;
 
-// Run inside every frame when a live video has stalled: what each WebRTC
-// connection has received and decoded so far. Taken twice, twenty seconds
-// apart, the numbers that kept rising show where the pictures stopped.
-const WEBRTC_STATS = `Promise.all(
-  (window.__screenWallPeers || [])
-    .filter((pc) => pc.connectionState !== "closed")
-    .map(async (pc) => {
-      const video = [];
-      for (const s of (await pc.getStats()).values())
-        if (s.type === "inbound-rtp" && s.kind === "video")
-          video.push({
-            packetsReceived: s.packetsReceived,
-            packetsLost: s.packetsLost,
-            framesReceived: s.framesReceived,
-            framesDecoded: s.framesDecoded,
-            framesDropped: s.framesDropped,
-            keyFramesDecoded: s.keyFramesDecoded,
-            keyFramesRequested: s.pliCount,
-            freezes: s.freezeCount,
-            decoder: s.decoderImplementation,
-            hardwareDecoder: s.powerEfficientDecoder,
-          });
-      return { connection: pc.connectionState, ice: pc.iceConnectionState, video };
-    }),
-)`;
+// Run inside every frame: the latest answer preload.js has from each WebRTC
+// connection, with how long ago it was asked and how long ago it answered.
+// A connection that was asked recently but has not answered for a long time
+// has stopped responding altogether.
+const WEBRTC_READINGS = `(window.__screenWallPeers || [])
+  .filter((peer) => peer.pc.connectionState !== "closed")
+  .map((peer) => ({
+    connection: peer.pc.connectionState,
+    ice: peer.pc.iceConnectionState,
+    askedSecondsAgo: peer.asked ? Math.round((Date.now() - peer.asked) / 1000) : null,
+    answeredSecondsAgo: peer.answered ? Math.round((Date.now() - peer.answered) / 1000) : null,
+    ...peer.reading,
+  }))`;
 
-// Run inside every frame: the bytes its WebRTC connections have received so far.
-const WEBRTC_BYTES = `Promise.all(
-  (window.__screenWallPeers || []).map(async (pc) => {
-    let bytes = 0;
-    for (const s of (await pc.getStats()).values())
-      if (s.type === "inbound-rtp") bytes += s.bytesReceived || 0;
-    return bytes;
-  }),
-).then((all) => all.reduce((a, b) => a + b, 0))`;
+// Run inside every frame of a screen with Play sound ticked: players usually
+// start muted and want a click, which nobody is there to give after a reload.
+const UNMUTE = `for (const media of document.querySelectorAll("video, audio"))
+  if (media.muted) media.muted = false;`;
 
 const runtime = new Map(); // screen key -> { win, bounds, loaded, loadStarted, status, attempt, retryTimer, probing }
 const connected = new Set(); // keys of screens whose display is plugged in
@@ -323,7 +306,7 @@ function logWebrtc(s, r) {
   const stalled = r.still;
   const stats = Promise.all(
     r.win.webContents.mainFrame.framesInSubtree.map((f) =>
-      f.executeJavaScript(WEBRTC_STATS).catch(() => []),
+      f.executeJavaScript(WEBRTC_READINGS).catch(() => []),
     ),
   ).then((all) => JSON.stringify(all.flat()));
   // A struggling page can take its time to answer; the reload must not wait on it.
@@ -366,15 +349,16 @@ function probe() {
         replaceWindow(s, r, `did not answer for ${HANG_MS / 1000}s`);
     }, HANG_MS);
     const frames = win.webContents.mainFrame.framesInSubtree;
+    if (s.muted === false)
+      for (const f of frames) f.executeJavaScript(UNMUTE).catch(() => {});
     Promise.all(
-      frames.map((f) => f.executeJavaScript(WEBRTC_BYTES).catch(() => 0)),
+      frames.map((f) => f.executeJavaScript(WEBRTC_READINGS).catch(() => [])),
     )
-      .then((bytes) => {
-        if (r.win === win)
-          noteReceived(
-            r,
-            bytes.reduce((a, b) => a + b, 0),
-          );
+      .then((readings) => {
+        const bytes = readings
+          .flat()
+          .reduce((sum, peer) => sum + (peer.bytes || 0), 0);
+        if (r.win === win) noteReceived(r, bytes);
       })
       .catch(() => {});
     Promise.all(

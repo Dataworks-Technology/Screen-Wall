@@ -27,7 +27,7 @@ Each card says what its screen is doing (Showing, Loading, Retrying, Black, Not 
 
 On the laptop itself the mouse works on the pages directly. The pointer is hidden while it is still, and comes back for three seconds whenever the mouse moves.
 
-A page's own mute button only changes that page; the screen stays silent until **Play sound** is ticked on its card.
+**Play sound** is the one switch for a screen's sound. Unticked, the screen is silent whatever the page does. Ticked, the app also unmutes the page's own player within ten seconds, and again after every reload, so nobody has to click the player's mute button. Sound comes out of whichever output Windows has set as its default, not necessarily the monitor the page is on.
 
 A card showing a live video feed says how fast that video is arriving (`video arriving at 6.2 Mbit/s`), measured over the last ten seconds. This counts WebRTC video and sound only, not the rest of the page. The line under the title at the top gives the download rate of the whole laptop, including anything else running on it.
 
