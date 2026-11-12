@@ -27,7 +27,7 @@ Each card says what its screen is doing (Showing, Loading, Retrying, Black, Not 
 
 On the laptop itself the mouse works on the pages directly. The pointer is hidden while it is still, and comes back for three seconds whenever the mouse moves.
 
-**Play sound** is the one switch for a screen's sound. Unticked, the screen is silent whatever the page does. Ticked, the app also unmutes the page's own player within ten seconds, and again after every reload, so nobody has to click the player's mute button. Sound comes out of whichever output Windows has set as its default, not necessarily the monitor the page is on.
+**Play sound** is the one switch for a screen's sound. Unticked, the screen is silent whatever the page does. Ticked, the app also unmutes the page's own player within ten seconds, and again after every reload, so nobody has to click the player's mute button. Sound comes out of whichever output Windows has set as its default, not necessarily the monitor the page is on. Next to the tick the card says whether the page is making sound at that moment: `sound is playing` with nothing to hear means the sound is going to a different output, so change the default output in Windows sound settings; `the page is silent` means the page or its feed has no sound to give.
 
 A card showing a live video feed says how fast that video is arriving (`video arriving at 6.2 Mbit/s`), measured over the last ten seconds. This counts WebRTC video and sound only, not the rest of the page. The line under the title at the top gives the download rate of the whole laptop, including anything else running on it.
 
@@ -63,7 +63,7 @@ The downloaded log starts with a reading of the laptop taken at that moment: whe
 
 The log says which kind of freeze it was. Download it from **Settings → Fault log** on the control page, from any device; on the laptop it is `screen-wall.log` in the settings folder.
 
-When a live video stops, two `video stalled … WebRTC:` lines are written twenty seconds apart, then `video froze`, and the page is reloaded. Compare the numbers in the two `stalled` lines:
+A feed whose connection reports that it has failed (the usual result of the laptop's network dropping for a few seconds) is reloaded within ten seconds, logged as `feed connection failed`. When a live video stops for any other reason, two `video stalled … WebRTC:` lines are written twenty seconds apart, then `video froze`, and the page is reloaded. Compare the numbers in the two `stalled` lines:
 
 | Between the two lines                                             | What it means                                                                                          |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |

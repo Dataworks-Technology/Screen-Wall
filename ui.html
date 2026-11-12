@@ -674,8 +674,9 @@
             Forget this screen
           </button>
           <label class="sound"
-            ><input type="checkbox" class="sound-on" /> Play sound</label
-          >
+            ><input type="checkbox" class="sound-on" /> Play sound
+            <span class="dim sound-state"></span
+          ></label>
         </div>
       </section>
     </template>
@@ -959,6 +960,13 @@
             if (document.activeElement !== url) url.value = s.url || "";
           }
           $(".sound-on", el).checked = s.muted === false;
+          // With sound ticked, say whether the page is actually making any.
+          $(".sound-state", el).textContent =
+            s.muted !== false
+              ? ""
+              : s.audible
+                ? "· sound is playing"
+                : "· the page is silent";
 
           // Only offer what makes sense for what the screen is doing.
           const page = d.mode === "page";
