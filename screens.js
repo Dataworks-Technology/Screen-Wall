@@ -2,6 +2,7 @@
 // them when displays come and go. Nothing outside this file touches a window;
 // the control server uses the functions exported at the bottom.
 const { app, BrowserWindow, screen, session } = require("electron");
+const path = require("node:path");
 const { cfg, log, save, controlUrls } = require("./config");
 const { validateUrl, matchDisplays, backoffMs, httpError } = require("./lib");
 
@@ -31,6 +32,32 @@ const LIVE_VIDEOS = `[...document.querySelectorAll("video")]
       fullscreen: !!document.fullscreenElement,
     };
   })`;
+
+// Run inside every frame when a live video has stalled: what each WebRTC
+// connection has received and decoded so far. Taken twice, twenty seconds
+// apart, the numbers that kept rising show where the pictures stopped.
+const WEBRTC_STATS = `Promise.all(
+  (window.__screenWallPeers || [])
+    .filter((pc) => pc.connectionState !== "closed")
+    .map(async (pc) => {
+      const video = [];
+      for (const s of (await pc.getStats()).values())
+        if (s.type === "inbound-rtp" && s.kind === "video")
+          video.push({
+            packetsReceived: s.packetsReceived,
+            packetsLost: s.packetsLost,
+            framesReceived: s.framesReceived,
+            framesDecoded: s.framesDecoded,
+            framesDropped: s.framesDropped,
+            keyFramesDecoded: s.keyFramesDecoded,
+            keyFramesRequested: s.pliCount,
+            freezes: s.freezeCount,
+            decoder: s.decoderImplementation,
+            hardwareDecoder: s.powerEfficientDecoder,
+          });
+      return { connection: pc.connectionState, ice: pc.iceConnectionState, video };
+    }),
+)`;
 
 const runtime = new Map(); // screen key -> { win, bounds, loaded, loadStarted, status, attempt, retryTimer, probing }
 const connected = new Set(); // keys of screens whose display is plugged in
@@ -148,6 +175,8 @@ function createWindow(s, r) {
       contextIsolation: true,
       nodeIntegration: false,
       backgroundThrottling: false,
+      preload: path.join(__dirname, "preload.js"), // see that file: it only watches WebRTC
+      nodeIntegrationInSubFrames: true, // run the preload in embedded frames too; pages still get no Node
     },
   });
   if (!WINDOWED) win.setAlwaysOnTop(true, "screen-saver"); // above the taskbar and notifications
@@ -259,12 +288,34 @@ function checkVideo(s, r, videos) {
       ? videos.filter((v, i) => v.frames === before[i])
       : [];
   r.still = frozen.length ? r.still + 1 : 0;
+  // Noted when the stall is first seen and again when giving up on it.
+  const noted =
+    r.still === 1 || r.still === FROZEN_PROBES
+      ? logWebrtc(s, r)
+      : Promise.resolve();
   if (r.still < FROZEN_PROBES) return;
   log(
     `${s.key} video froze for ${(FROZEN_PROBES * PROBE_EVERY_MS) / 1000}s, reloading the page.`,
     JSON.stringify(frozen),
   );
-  load(s, r);
+  const win = r.win;
+  noted.then(() => r.win === win && load(s, r)); // reload once the numbers are written down
+}
+
+function logWebrtc(s, r) {
+  const stalled = r.still;
+  return Promise.all(
+    r.win.webContents.mainFrame.framesInSubtree.map((f) =>
+      f.executeJavaScript(WEBRTC_STATS).catch(() => []),
+    ),
+  )
+    .then((stats) =>
+      log(
+        `${s.key} video stalled (check ${stalled} of ${FROZEN_PROBES}), WebRTC:`,
+        JSON.stringify(stats.flat()),
+      ),
+    )
+    .catch(() => {});
 }
 
 function replaceWindow(s, r, why) {
