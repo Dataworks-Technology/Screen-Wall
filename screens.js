@@ -58,6 +58,19 @@ const WEBRTC_READINGS = `(window.__screenWallPeers || [])
 const UNMUTE = `for (const media of document.querySelectorAll("video, audio"))
   if (media.muted) media.muted = false;`;
 
+// Run inside every frame of a screen with "Fill the screen" ticked: puts the
+// page's biggest playing video into full screen, as the player's own button
+// would, unless something on the page already is.
+const FILL = `(() => {
+  if (document.fullscreenElement) return;
+  const area = (v) => v.offsetWidth * v.offsetHeight;
+  const video = [...document.querySelectorAll("video")]
+    .filter((v) => area(v) && v.readyState >= 2)
+    .sort((a, b) => area(b) - area(a))[0];
+  if (video) video.requestFullscreen().catch(() => {});
+})()`;
+const UNFILL = `if (document.fullscreenElement) document.exitFullscreen().catch(() => {})`;
+
 const runtime = new Map(); // screen key -> { win, bounds, loaded, loadStarted, status, attempt, retryTimer, probing }
 const connected = new Set(); // keys of screens whose display is plugged in
 let quitting = false;
@@ -326,6 +339,18 @@ function logWebrtc(s, r) {
     .catch(() => {});
 }
 
+// Does on the page what someone would otherwise click the player for: unmute
+// it and put its video into full screen. Repeated on every probe, so it holds
+// after a reload and if the player changes its mind.
+function applyPageOptions(s, r) {
+  if (!r.win || r.win.isDestroyed() || r.status !== "ok") return;
+  for (const f of r.win.webContents.mainFrame.framesInSubtree) {
+    if (s.muted === false) f.executeJavaScript(UNMUTE).catch(() => {});
+    // true = treat it as a click; a page may only go full screen in answer to one.
+    if (s.fill) f.executeJavaScript(FILL, true).catch(() => {});
+  }
+}
+
 function replaceWindow(s, r, why) {
   log(`${s.key} ${why}, replacing its window`);
   destroyWindow(r);
@@ -352,8 +377,7 @@ function probe() {
         replaceWindow(s, r, `did not answer for ${HANG_MS / 1000}s`);
     }, HANG_MS);
     const frames = win.webContents.mainFrame.framesInSubtree;
-    if (s.muted === false)
-      for (const f of frames) f.executeJavaScript(UNMUTE).catch(() => {});
+    applyPageOptions(s, r);
     Promise.all(
       frames.map((f) => f.executeJavaScript(WEBRTC_READINGS).catch(() => [])),
     )
@@ -454,8 +478,14 @@ function update(key, changes) {
     }
   }
   if ("muted" in changes) s.muted = !!changes.muted;
+  if ("fill" in changes) s.fill = !!changes.fill;
   if ("name" in changes) s.name = String(changes.name).trim().slice(0, 60);
   apply(s);
+  const r = rt(s.key);
+  applyPageOptions(s, r); // straight away, not at the next probe
+  if (changes.fill === false && r.win && !r.win.isDestroyed())
+    for (const f of r.win.webContents.mainFrame.framesInSubtree)
+      f.executeJavaScript(UNFILL).catch(() => {});
   save();
 }
 
