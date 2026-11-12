@@ -1,0 +1,1399 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Screen Wall</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f4f5f7;
+        --card: #fff;
+        --line: #d5d9e0;
+        --text: #16191f;
+        --dim: #5b6472;
+        --accent: #1463d8;
+        --on-accent: #fff;
+        --ok: #17794a;
+        --ok-bg: #dff5ea;
+        --bad: #b3261e;
+        --bad-bg: #fde7e5;
+        --idle-bg: #e6e9ee;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #111418;
+          --card: #1b1f26;
+          --line: #343b47;
+          --text: #eef0f3;
+          --dim: #a1a9b6;
+          --accent: #6ea8ff;
+          --on-accent: #0b1220;
+          --ok: #5bd39a;
+          --ok-bg: #153426;
+          --bad: #ff8a80;
+          --bad-bg: #40201d;
+          --idle-bg: #2a303a;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      body {
+        margin: 0;
+        padding: 16px;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          16px/1.45 system-ui,
+          sans-serif;
+      }
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: grid;
+        gap: 16px;
+      }
+      header.top {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+      }
+      .logo {
+        height: 56px;
+        width: auto;
+        flex: none;
+      }
+      h1 {
+        font-size: 1.3rem;
+        margin: 0;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin: 0;
+      }
+      h3 {
+        font-size: 1rem;
+        margin: 0 0 4px;
+      }
+      p {
+        margin: 0;
+      }
+      .dim {
+        color: var(--dim);
+        font-size: 0.9rem;
+      }
+      #banner {
+        color: var(--bad);
+      }
+      #screens {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr));
+        gap: 16px;
+      }
+      .card,
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+        align-content: start;
+      }
+      .card-head {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        justify-content: space-between;
+      }
+      .title-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 10px;
+        align-items: baseline;
+      }
+      .pill {
+        flex: none;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: var(--idle-bg);
+        color: var(--dim);
+        white-space: nowrap;
+      }
+      .pill.ok {
+        background: var(--ok-bg);
+        color: var(--ok);
+      }
+      .pill.bad {
+        background: var(--bad-bg);
+        color: var(--bad);
+      }
+      .problem {
+        color: var(--bad);
+        font-size: 0.9rem;
+      }
+      label.field {
+        display: grid;
+        gap: 4px;
+      }
+      label.field > span {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--dim);
+      }
+      input[type="text"],
+      input[type="password"],
+      select {
+        width: 100%;
+        padding: 9px 10px;
+        font: inherit;
+        color: inherit;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      .row > input,
+      .row > select {
+        flex: 1;
+        width: auto;
+        min-width: 12ch;
+      }
+      button {
+        padding: 9px 14px;
+        font: inherit;
+        color: inherit;
+        background: transparent;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--on-accent);
+        font-weight: 600;
+      }
+      button.link {
+        padding: 0;
+        border: 0;
+        color: var(--accent);
+        font-size: 0.9rem;
+        text-decoration: underline;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      label.sound {
+        margin-left: auto;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      ul.urls {
+        margin: 0;
+        padding-left: 1.2em;
+      }
+      #history-list {
+        margin: 16px 0;
+        padding: 0;
+        max-height: 60vh;
+        overflow-y: auto;
+        list-style: none;
+      }
+      #history-list li {
+        display: grid;
+        gap: 8px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      #history-list summary {
+        cursor: pointer;
+      }
+      #history-list .full {
+        margin: 8px 0 0;
+        font-size: 0.85rem;
+        overflow-wrap: anywhere;
+        user-select: all;
+      }
+      #history-list .rename {
+        margin-left: auto;
+      }
+      /* A web address in two short lines: where it is, then its options cut to one line. */
+      .address {
+        display: inline-grid;
+        max-width: calc(100% - 1.5em);
+        vertical-align: top;
+      }
+      .address > * {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .address .options {
+        font-size: 0.85rem;
+        color: var(--dim);
+      }
+      .show-form {
+        position: relative;
+      }
+      .suggest {
+        position: absolute;
+        z-index: 1;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 320px;
+        margin: 4px 0 0;
+        padding: 4px;
+        overflow-y: auto;
+        list-style: none;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+      }
+      .suggest li {
+        padding: 6px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .suggest .address {
+        display: grid;
+        max-width: none;
+      }
+      .suggest li:hover,
+      .suggest li.active {
+        background: var(--idle-bg);
+      }
+      a {
+        color: var(--accent);
+      }
+      code {
+        font:
+          600 1.05rem ui-monospace,
+          monospace;
+        letter-spacing: 0.08em;
+        user-select: all;
+      }
+      #signin {
+        max-width: 440px;
+      }
+      dialog {
+        width: min(560px, calc(100% - 32px));
+        padding: 20px;
+        color: var(--text);
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+      #remote {
+        width: min(1100px, calc(100% - 32px));
+      }
+      #remote-picture {
+        display: block;
+        width: 100%;
+        min-height: 120px;
+        margin-top: 12px;
+        background: #000;
+        border-radius: 6px;
+        cursor: crosshair;
+        touch-action: none;
+      }
+      dialog::backdrop {
+        background: rgb(0 0 0 / 0.5);
+      }
+      dialog form,
+      dialog section {
+        display: grid;
+        gap: 10px;
+      }
+      dialog > .sections {
+        display: grid;
+        gap: 22px;
+        margin-top: 16px;
+      }
+      .dialog-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <div class="brand">
+          <svg
+            class="logo"
+            role="img"
+            aria-label="Dataworks"
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 0 500 281.11"
+          >
+            <defs>
+              <linearGradient
+                id="b"
+                x1="175.81"
+                y1="95.96"
+                x2="300.95"
+                y2="95.96"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0" stop-color="#28eb00" />
+                <stop offset=".51" stop-color="#cbff00" />
+                <stop offset="1" stop-color="#ff9800" />
+              </linearGradient>
+              <linearGradient
+                id="c"
+                x1="199.08"
+                y1="95.98"
+                x2="324.19"
+                y2="95.98"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0" stop-color="#33aeff" />
+                <stop offset="1" stop-color="#ff21bd" />
+              </linearGradient>
+            </defs>
+            <g>
+              <path
+                d="M276.28,94.45c-.87,2.18-1.73,4.38-2.62,6.51l4.93,9.02c1.94-3.93,3.63-8.24,5.33-12.5,3.93-9.92,7.98-20.12,13.78-22.95,1.97-.97,3.26-2.93,3.26-5.13v-3.86c-13.23,0-19.05,14.69-24.67,28.92ZM266,124.89c-2.02.97-4.24,1.5-6.76,1.5-13.23,0-19.05-14.71-24.69-28.92-.89-2.25-1.78-4.52-2.71-6.71-.43-1.04-.87-2.07-1.33-3.06-.44-1-.9-1.96-1.36-2.9-1.58-3.11-3.24-5.82-5.1-7.78-.59-.62-1.2-1.18-1.84-1.64-.71-.51-1.43-.9-2.2-1.18-.79-.3-1.61-.44-2.47-.44-7.63,0-12.42,12.06-17.04,23.72-5.63,14.21-11.45,28.92-24.67,28.92v-3.88c0-2.19,1.28-4.16,3.26-5.12,5.81-2.85,9.85-13.04,13.77-22.95,5.64-14.23,11.47-28.92,24.69-28.92,2.85,0,5.36.69,7.6,1.91.74.41,1.46.87,2.15,1.38.64.49,1.27,1.02,1.86,1.61,1.91,1.81,3.57,4.06,5.1,6.6.44.72.87,1.46,1.28,2.24.43.77.82,1.56,1.22,2.39,1.99,4.01,3.73,8.42,5.46,12.8,4.62,11.66,9.41,23.72,17.04,23.72.87,0,1.69-.15,2.48-.46l.02.03s.03.07.07.12c.46.92,2.89,5.61,4.19,7.04Z"
+                fill="url(#b)"
+              />
+              <path
+                d="M324.19,65.53v3.87c0,2.2-1.28,4.16-3.26,5.13-5.81,2.83-9.85,13.03-13.78,22.95-5.63,14.21-11.46,28.92-24.69,28.92-2.85,0-5.36-.69-7.6-1.91-.74-.41-1.46-.87-2.15-1.38-.64-.49-1.27-1.02-1.86-1.61-1.91-1.83-3.57-4.06-5.1-6.6-.44-.72-.87-1.48-1.28-2.24-.43-.77-.82-1.58-1.22-2.4-1.99-4.01-3.73-8.42-5.46-12.78-4.62-11.66-9.41-23.72-17.04-23.72-.86,0-1.68.15-2.47.44l-.02-.02s-.02-.07-.05-.1c-.48-.92-2.93-5.64-4.23-7.06,2.02-.97,4.24-1.5,6.76-1.5,13.23,0,19.05,14.69,24.69,28.92.89,2.25,1.79,4.52,2.71,6.73.43,1.04.87,2.06,1.33,3.04.44,1,.9,1.96,1.37,2.9,1.58,3.11,3.24,5.82,5.1,7.78.59.63,1.22,1.18,1.86,1.64.69.51,1.43.92,2.19,1.18.79.3,1.61.44,2.47.44,7.65,0,12.42-12.06,17.04-23.72,5.64-14.23,11.47-28.92,24.69-28.92ZM199.08,126.43v-3.86c0-2.2,1.28-4.16,3.26-5.13,5.8-2.83,9.85-13.03,13.78-22.95,1.69-4.26,3.39-8.57,5.33-12.5l4.93,9.02c-.89,2.13-1.75,4.33-2.62,6.51-5.63,14.23-11.45,28.92-24.67,28.92Z"
+                fill="url(#c)"
+              />
+            </g>
+            <g>
+              <path
+                d="M82.37,157.53v15.64h-14.87c-2.79,0-5.33.7-7.62,2.05-2.3,1.38-4.12,3.2-5.48,5.5-1.37,2.3-2.05,4.84-2.05,7.6v11.77c0,2.75.68,5.27,2.05,7.55,1.35,2.28,3.18,4.1,5.48,5.48,2.3,1.35,4.84,2.05,7.62,2.05h14.87c2.35,0,4.37-.85,6.04-2.52,1.68-1.68,2.5-3.69,2.5-6.04v-49.08h-8.55ZM82.37,206.61h-14.87c-1.81,0-3.37-.64-4.67-1.94-1.28-1.3-1.94-2.84-1.94-4.67v-11.58c0-1.84.66-3.41,1.94-4.73,1.3-1.32,2.86-1.96,4.67-1.96h14.87v24.87Z"
+                fill="currentColor"
+              />
+              <path
+                d="M172.84,181.74v-8.56h-12.93v-15.64h-8.55v15.64h-5.46v8.56h5.46v21.55c0,2.18.55,4.18,1.64,5.97,1.09,1.81,2.56,3.24,4.39,4.31,1.83,1.05,3.84,1.6,6.06,1.6h9.39v-8.56h-9.28c-1,0-1.86-.32-2.58-.98-.72-.68-1.07-1.47-1.07-2.37v-21.52h12.93Z"
+                fill="currentColor"
+              />
+              <path
+                d="M325.3,180.72c-1.38-2.3-3.2-4.12-5.5-5.5-2.3-1.35-4.84-2.05-7.62-2.05h-9.15c-2.79,0-5.33.7-7.62,2.05-2.3,1.38-4.12,3.2-5.5,5.5-1.36,2.3-2.03,4.84-2.03,7.6v11.67c0,2.79.68,5.33,2.03,7.62,1.37,2.3,3.2,4.12,5.5,5.5,2.3,1.35,4.84,2.05,7.62,2.05h9.15c2.79,0,5.33-.7,7.62-2.05,2.3-1.37,4.12-3.2,5.5-5.5,1.35-2.3,2.03-4.84,2.03-7.62v-11.67c0-2.77-.68-5.31-2.03-7.6ZM318.79,199.92c0,1.84-.64,3.41-1.92,4.73-1.28,1.32-2.84,1.96-4.69,1.96h-9.15c-1.81,0-3.37-.64-4.67-1.96-1.3-1.32-1.94-2.88-1.94-4.73v-11.5c0-1.84.64-3.41,1.94-4.73,1.3-1.32,2.86-1.96,4.67-1.96h9.15c1.84,0,3.41.64,4.69,1.96,1.28,1.32,1.92,2.88,1.92,4.73v11.5Z"
+                fill="currentColor"
+              />
+              <path
+                d="M348.35,173.18c-2.22,0-4.24.53-6.06,1.58-1.83,1.05-3.27,2.48-4.37,4.25-1.11,1.79-1.66,3.76-1.66,5.93v30.23h8.56v-30.08c0-.94.34-1.75,1.02-2.41.7-.66,1.52-1,2.5-1h13.12v-8.51h-13.12Z"
+                fill="currentColor"
+              />
+              <path
+                d="M446.03,195.13c-1.07-1.79-2.52-3.2-4.35-4.27-1.83-1.07-3.84-1.6-6.06-1.6h-15.32c-.96,0-1.79-.32-2.48-.98-.7-.64-1.04-1.43-1.04-2.35v-1c0-.9.34-1.66,1.04-2.3.7-.64,1.52-.96,2.48-.96h24.64v-8.55h-24.64c-2.2,0-4.24.53-6.04,1.58-1.83,1.05-3.29,2.48-4.39,4.25-1.09,1.79-1.64,3.76-1.64,5.97v1c0,2.16.55,4.14,1.64,5.95,1.09,1.79,2.56,3.22,4.39,4.29,1.81,1.07,3.84,1.6,6.04,1.6h15.32c.98,0,1.81.32,2.48.98.7.64,1.04,1.43,1.04,2.39v2.11c0,.9-.34,1.69-1.04,2.33-.68.66-1.51.98-2.48.98h-25.49v8.55h25.49c2.22,0,4.24-.53,6.06-1.6,1.83-1.05,3.28-2.48,4.35-4.29,1.09-1.79,1.62-3.76,1.62-5.93v-2.2c0-2.18-.53-4.16-1.62-5.95Z"
+                fill="currentColor"
+              />
+              <path
+                d="M114.14,173.18c-2.77,0-5.31.7-7.61,2.05-2.3,1.37-4.12,3.18-5.5,5.46-1.36,2.26-2.05,4.78-2.05,7.57v11.75c0,2.79.7,5.33,2.05,7.62,1.37,2.3,3.2,4.12,5.5,5.5,2.3,1.36,4.84,2.05,7.61,2.05h8.68c2.48,0,4.76-1.34,6-3.5l.19-.34v3.84h8.56v-42h-23.44ZM114.14,206.61c-1.81,0-3.35-.64-4.65-1.96-1.3-1.32-1.94-2.88-1.94-4.72v-11.6c0-1.83.64-3.39,1.94-4.67,1.3-1.28,2.84-1.92,4.65-1.92h14.87v24.87h-14.87Z"
+                fill="currentColor"
+              />
+              <polygon
+                points="403.87 175.27 393.3 175.27 378.83 190.59 376.09 190.59 376.09 160.38 367.96 160.38 367.96 215.24 376.09 215.24 376.09 198.73 378.1 198.73 394.11 215.24 405.49 215.24 385.62 194.64 403.87 175.27"
+                fill="currentColor"
+              />
+              <path
+                d="M283.33,173.37l-7.56,42.15c-2.58,0-5.44.35-7.89-.59-2.62-1-4.49-3.18-5.85-5.57-1.65-2.92-2.77-5.92-3.9-9.08-.61-1.71-1.13-3.45-1.73-5.14-.24-.67-.56-1.43-1.17-1.86-.24-.17-.44-.21-.67-.21s-.43.04-.67.21c-.61.43-.93.91-1.17,1.58-.59,1.69-1.11,3.71-1.73,5.42-1.13,3.16-2.25,6.44-3.9,9.36-1.36,2.4-3.23,4.29-5.85,5.29-2.45.95-5.31.59-7.89.59l-7.56-42.15h8.89s4.68,26.16,4.68,26.18l1.1,6.43c.33-.48.28-.52.5-.95,1.89-3.62,2.71-7.58,4.1-11.38,1.02-2.84,2.47-5.79,5.18-7.35,1.32-.76,2.82-1.17,4.31-1.15,1.49-.02,2.99.39,4.31,1.15,2.71,1.56,4.16,4.51,5.18,7.35,1.39,3.81,2.21,7.76,4.1,11.38.22.43.17.46.5.95l1.1-6.43s4.68-26.18,4.68-26.18h8.89Z"
+                fill="currentColor"
+              />
+              <path
+                d="M194.56,173.18c-2.77,0-5.31.7-7.61,2.05-2.3,1.37-4.12,3.18-5.5,5.46-1.36,2.26-2.05,4.78-2.05,7.57v11.75c0,2.79.7,5.33,2.05,7.62,1.37,2.3,3.2,4.12,5.5,5.5,2.3,1.36,4.84,2.05,7.61,2.05h8.68c2.48,0,4.76-1.34,6-3.5l.19-.34v3.84h8.56v-42h-23.44ZM194.56,206.61c-1.81,0-3.35-.64-4.65-1.96-1.3-1.32-1.94-2.88-1.94-4.72v-11.6c0-1.83.64-3.39,1.94-4.67,1.3-1.28,2.84-1.92,4.65-1.92h14.87v24.87h-14.87Z"
+                fill="currentColor"
+              />
+            </g>
+          </svg>
+          <div>
+            <h1>Screen Wall</h1>
+            <div id="host" class="dim"></div>
+          </div>
+        </div>
+        <div class="row" id="tools" hidden>
+          <button
+            id="identify"
+            title="Shows each screen's name on the screen itself for a few seconds, so you can tell them apart"
+          >
+            Identify screens
+          </button>
+          <button id="open-history">History</button>
+          <button id="open-settings">Settings</button>
+        </div>
+      </header>
+
+      <div id="banner" role="status" hidden></div>
+
+      <form class="panel" id="signin" hidden>
+        <h2>Enter the access token</h2>
+        <p class="dim">
+          To find it, open this page in a browser on the laptop running Screen
+          Wall. No token is needed there, and the token is shown under Settings.
+        </p>
+        <div class="row">
+          <input
+            type="password"
+            id="token"
+            aria-label="Access token"
+            autocomplete="off"
+          />
+          <button class="primary">Continue</button>
+        </div>
+      </form>
+
+      <main id="screens"></main>
+    </div>
+
+    <dialog id="settings" aria-labelledby="settings-title">
+      <div class="dialog-head">
+        <h2 id="settings-title">Settings</h2>
+        <button type="button" id="close-settings">Close</button>
+      </div>
+      <div class="sections">
+        <section>
+          <h3>Address</h3>
+          <div>
+            <p>Other devices on the network open this page at:</p>
+            <ul class="urls" id="urls"></ul>
+          </div>
+          <p class="problem" id="listen-note" hidden></p>
+          <p>
+            <button type="button" class="link" id="listen-change">
+              Answer on one address only
+            </button>
+          </p>
+          <form id="listen-form" hidden>
+            <label class="field">
+              <span>Answer on</span>
+              <div class="row">
+                <select id="listen"></select>
+                <button class="primary" id="listen-apply">Apply</button>
+              </div>
+            </label>
+            <p class="dim">
+              Choosing one address stops this page answering on the others, and
+              moves you to the chosen address.
+            </p>
+          </form>
+        </section>
+
+        <section id="token-section">
+          <h3>Access token</h3>
+          <p><code id="token-show"></code></p>
+          <p class="dim">
+            Other devices are asked for this the first time they open the page.
+            A browser on the laptop itself is never asked.
+          </p>
+          <p>
+            <button type="button" class="link" id="token-change">
+              Change the token
+            </button>
+          </p>
+          <form id="token-form" hidden>
+            <label class="field">
+              <span>New token (8 characters or more, no spaces)</span>
+              <div class="row">
+                <input
+                  type="text"
+                  id="token-new"
+                  autocomplete="off"
+                  spellcheck="false"
+                  maxlength="64"
+                />
+                <button class="primary">Save</button>
+              </div>
+            </label>
+            <div class="row">
+              <button type="button" id="token-generate">
+                Make a random one instead
+              </button>
+              <button type="button" id="token-cancel">Cancel</button>
+            </div>
+            <p class="dim">
+              Every other device will be asked for the new token.
+            </p>
+          </form>
+        </section>
+        <section>
+          <h3>Updates</h3>
+          <p id="update-status" role="status"></p>
+          <div id="update-install" hidden>
+            <p>
+              <button type="button" class="primary" id="update-go"></button>
+            </p>
+            <p class="dim">
+              Every screen goes dark for about a minute while it installs, then
+              comes back on its own. Not during a show.
+            </p>
+          </div>
+        </section>
+        <section>
+          <h3>Fault log</h3>
+          <p class="dim">
+            Everything that went wrong and was recovered from, with the time it
+            happened.
+          </p>
+          <p>
+            <button type="button" id="log-download">Download the log</button>
+          </p>
+        </section>
+        <p class="dim" id="open-access" hidden>
+          No token is needed: open access is turned on in config.json.
+        </p>
+        <p class="problem" id="settings-error" role="status" hidden></p>
+      </div>
+    </dialog>
+
+    <dialog id="remote" aria-labelledby="remote-title">
+      <div class="dialog-head">
+        <h2 id="remote-title"></h2>
+        <button type="button" id="close-remote">Close</button>
+      </div>
+      <p class="dim">
+        Move over the picture and click to use the buttons on the page. The
+        picture updates about once a second.
+      </p>
+      <img id="remote-picture" alt="What this screen is showing" />
+      <p class="problem" id="remote-error" role="status" hidden></p>
+    </dialog>
+
+    <dialog id="history" aria-labelledby="history-title">
+      <div class="dialog-head">
+        <h2 id="history-title">History</h2>
+        <button type="button" id="close-history">Close</button>
+      </div>
+      <p class="dim" id="history-note"></p>
+      <ul id="history-list"></ul>
+      <button type="button" id="history-clear">Clear all</button>
+      <p class="problem" id="history-error" role="status" hidden></p>
+    </dialog>
+
+    <template id="card">
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <div class="title-row">
+              <h2 class="title"></h2>
+              <button type="button" class="link" data-act="rename">
+                Rename
+              </button>
+            </div>
+            <form class="row rename-form" hidden>
+              <input
+                type="text"
+                class="name"
+                maxlength="60"
+                aria-label="Name for this screen"
+              />
+              <button class="primary">Save</button>
+              <button type="button" data-act="cancel-rename">Cancel</button>
+            </form>
+            <div class="meta dim"></div>
+          </div>
+          <span class="pill"></span>
+        </div>
+
+        <p class="problem" hidden></p>
+
+        <form class="show-form">
+          <label class="field">
+            <span>Web page to show</span>
+            <div class="row">
+              <input
+                class="url"
+                type="text"
+                inputmode="url"
+                placeholder="https://…"
+                autocomplete="off"
+                spellcheck="false"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded="false"
+              />
+              <button class="primary">Show</button>
+            </div>
+          </label>
+          <ul class="suggest" role="listbox" aria-label="History" hidden></ul>
+        </form>
+
+        <div class="row actions">
+          <button type="button" data-act="reload" title="Load the page again">
+            Reload page
+          </button>
+          <button
+            type="button"
+            data-act="remote"
+            title="See this screen here and click on its page"
+          >
+            Remote control
+          </button>
+          <button
+            type="button"
+            data-act="black"
+            title="Cover the screen with black"
+          >
+            Black screen
+          </button>
+          <button
+            type="button"
+            data-act="off"
+            title="Close what is showing and let the laptop's desktop appear on this screen"
+          >
+            Stop showing
+          </button>
+          <button
+            type="button"
+            data-act="forget"
+            title="Remove this unplugged screen from the list"
+          >
+            Forget this screen
+          </button>
+          <label class="sound"
+            ><input type="checkbox" class="sound-on" /> Play sound</label
+          >
+        </div>
+      </section>
+    </template>
+
+    <script>
+      const $ = (sel, root = document) => root.querySelector(sel);
+      const ALL = "0.0.0.0";
+      const cards = new Map(); // screen key -> { el, url } (url = last value the server reported)
+      let token = "";
+      let signedOut = false;
+      let lastAddresses = "";
+      let loadedVersion = null;
+
+      try {
+        token = localStorage.getItem("token") || "";
+      } catch {}
+      // The laptop opens this page with #token=…; keep it and take it out of the address bar.
+      const fromLink = new URLSearchParams(location.hash.slice(1)).get("token");
+      if (fromLink) setToken(fromLink);
+      history.replaceState(null, "", location.pathname);
+
+      function setToken(value) {
+        token = value;
+        try {
+          localStorage.setItem("token", token);
+        } catch {}
+      }
+
+      function say(el, text) {
+        el.textContent = text;
+        el.hidden = !text;
+      }
+
+      async function api(path, body) {
+        const res = await fetch("/api/" + path, {
+          method: body ? "POST" : "GET",
+          headers: { "Content-Type": "application/json", "X-Token": token },
+          body: body && JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok)
+          throw Object.assign(new Error(data.error || res.statusText), {
+            status: res.status,
+          });
+        return data;
+      }
+
+      function showSignedOut(yes) {
+        signedOut = yes;
+        $("#signin").hidden = !yes;
+        $("#screens").hidden = yes;
+        $("#tools").hidden = yes;
+        if (yes)
+          for (const d of document.querySelectorAll("dialog[open]")) d.close();
+      }
+
+      // Sends a change. Problems are reported in `where` (the page banner unless told otherwise).
+      async function act(path, body, where = $("#banner")) {
+        try {
+          render(await api(path, body));
+          say(where, "");
+          return true;
+        } catch (e) {
+          if (e.status === 401) showSignedOut(true);
+          else say(where, e.message);
+          return false;
+        }
+      }
+
+      // What the screen is doing, in plain words.
+      function describe(s) {
+        const mode =
+          s.url === null ? "unused" : s.url === "" ? "black" : "page";
+        if (!s.connected)
+          return {
+            mode,
+            pill: "Unplugged",
+            style: "bad",
+            problem:
+              "This display is not connected. It picks up where it left off when plugged back in.",
+          };
+        if (mode === "unused")
+          return { mode, pill: "Not in use", style: "", problem: "" };
+        if (mode === "black")
+          return { mode, pill: "Black", style: "", problem: "" };
+        if (s.status === "ok")
+          return { mode, pill: "Showing", style: "ok", problem: "" };
+        if (s.status === "loading")
+          return { mode, pill: "Loading", style: "", problem: "" };
+        if (s.status === "not a web page")
+          return {
+            mode,
+            pill: "Problem",
+            style: "bad",
+            problem:
+              "This address is a file or a raw stream, not a web page, so there is nothing to show.",
+          };
+        return {
+          mode,
+          pill: "Retrying",
+          style: "bad",
+          problem: `The page is not loading (${s.status}). Trying again automatically.`,
+        };
+      }
+
+      // A web address in two short lines; the whole address is in the tooltip.
+      function addressLabel(url) {
+        const el = Object.assign(document.createElement("span"), {
+          className: "address",
+          title: url,
+        });
+        let where = url;
+        let options = "";
+        try {
+          const u = new URL(url);
+          where = u.host + u.pathname;
+          options = [...u.searchParams]
+            .map(([k, v]) => `${k}=${v}`)
+            .join(" · ");
+        } catch {}
+        // A page that has been given a name shows that, with where it is underneath.
+        if (pageNames[url]) [where, options] = [pageNames[url], where];
+        el.append(
+          Object.assign(document.createElement("strong"), {
+            textContent: where,
+          }),
+        );
+        if (options)
+          el.append(
+            Object.assign(document.createElement("span"), {
+              className: "options",
+              textContent: options,
+            }),
+          );
+        return el;
+      }
+
+      // Pages from the history whose name or address contains every word typed, in any order.
+      function matchHistory(typed) {
+        const words = typed.toLowerCase().split(/\s+/).filter(Boolean);
+        return historyUrls.filter((u) => {
+          const text = `${pageNames[u] || ""} ${u}`.toLowerCase();
+          return words.every((w) => text.includes(w));
+        });
+      }
+
+      // Offers the history under an address box: all of it on focus, narrowed as you type.
+      // Up/Down and Enter, or a click, put an address in the box; it is shown when you press Show.
+      function suggestFromHistory(input, list, id) {
+        let active = -1;
+        list.id = id;
+        input.setAttribute("aria-controls", id);
+        const options = () => [...list.children];
+        const setActive = (i) => {
+          active = i;
+          options().forEach((o, n) => o.classList.toggle("active", n === i));
+          if (i < 0) return input.removeAttribute("aria-activedescendant");
+          input.setAttribute("aria-activedescendant", options()[i].id);
+          options()[i].scrollIntoView({ block: "nearest" });
+        };
+        const close = () => {
+          list.hidden = true;
+          input.setAttribute("aria-expanded", "false");
+          setActive(-1);
+        };
+        const pick = (url) => {
+          input.value = url;
+          close();
+        };
+        const open = (urls) => {
+          list.replaceChildren(
+            ...urls.map((url, i) => {
+              const li = document.createElement("li");
+              li.id = `${id}-${i}`;
+              li.setAttribute("role", "option");
+              li.append(addressLabel(url));
+              li.addEventListener("mousedown", (e) => e.preventDefault()); // keep the box focused
+              li.addEventListener("click", () => pick(url));
+              li.dataset.url = url;
+              return li;
+            }),
+          );
+          list.hidden = !urls.length;
+          input.setAttribute("aria-expanded", String(!!urls.length));
+          setActive(-1);
+        };
+        input.addEventListener("focus", () => open(historyUrls));
+        // A click in a box that already has the keyboard brings the list back.
+        input.addEventListener("click", () => {
+          if (list.hidden) open(historyUrls);
+        });
+        input.addEventListener("input", () => open(matchHistory(input.value)));
+        input.addEventListener("blur", close);
+        input.addEventListener("keydown", (e) => {
+          const count = list.hidden ? 0 : list.children.length;
+          if (e.key === "ArrowDown" && list.hidden) {
+            open(historyUrls);
+          } else if (e.key === "ArrowDown" && count) {
+            setActive((active + 1) % count);
+          } else if (e.key === "ArrowUp" && count) {
+            setActive((active + count - 1) % count);
+          } else if (e.key === "Enter" && active >= 0) {
+            pick(options()[active].dataset.url);
+          } else if (e.key === "Escape" && count) {
+            close();
+          } else return;
+          e.preventDefault();
+        });
+      }
+
+      function makeCard(key) {
+        const el = $("#card").content.firstElementChild.cloneNode(true);
+        const renameForm = $(".rename-form", el);
+        const renaming = (on) => {
+          renameForm.hidden = !on;
+          $(".title-row", el).hidden = on;
+          if (on) {
+            $(".name", el).value = el.dataset.name;
+            $(".name", el).focus();
+          }
+        };
+        $(".show-form", el).addEventListener("submit", (e) => {
+          e.preventDefault();
+          act("screen", { key, url: $(".url", el).value });
+        });
+        suggestFromHistory($(".url", el), $(".suggest", el), `suggest-${key}`);
+        renameForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          if (await act("screen", { key, name: $(".name", el).value }))
+            renaming(false);
+        });
+        $(".sound-on", el).addEventListener("change", (e) =>
+          act("screen", { key, muted: !e.target.checked }),
+        );
+        el.addEventListener("click", (e) => {
+          const what = e.target.dataset.act;
+          if (what === "rename") renaming(true);
+          if (what === "cancel-rename") renaming(false);
+          if (what === "reload") act("reload", { key });
+          if (what === "remote") openRemote(key, $(".title", el).textContent);
+          if (what === "black") act("screen", { key, url: "" });
+          if (what === "off") act("screen", { key, url: null });
+          if (what === "forget") act("forget", { key });
+        });
+        $("#screens").append(el);
+        return { el, url: undefined };
+      }
+
+      function renderScreens(state) {
+        for (const [key, card] of cards) {
+          if (!state.screens.some((s) => s.key === key)) {
+            card.el.remove();
+            cards.delete(key);
+          }
+        }
+        for (const s of state.screens) {
+          if (!cards.has(s.key)) cards.set(s.key, makeCard(s.key));
+          const card = cards.get(s.key);
+          const el = card.el;
+          const d = describe(s);
+
+          el.dataset.name = s.name || "";
+          $(".title", el).textContent = s.title;
+          const b = s.bounds || {};
+          $(".meta", el).textContent = [
+            s.label,
+            b.width && `${b.width}×${b.height}`,
+            s.internal && "the laptop's own display",
+          ]
+            .filter(Boolean)
+            .join(" · ");
+          $(".pill", el).textContent = d.pill;
+          $(".pill", el).className = "pill " + d.style;
+          say($(".problem", el), d.problem);
+
+          // Only overwrite the box when the server value changed, so typing is never interrupted.
+          const url = $(".url", el);
+          if (card.url !== s.url) {
+            card.url = s.url;
+            if (document.activeElement !== url) url.value = s.url || "";
+          }
+          $(".sound-on", el).checked = s.muted === false;
+
+          // Only offer what makes sense for what the screen is doing.
+          const page = d.mode === "page";
+          $("[data-act=reload]", el).hidden = !page || !s.connected;
+          $("[data-act=remote]", el).hidden = !page || !s.connected;
+          $("[data-act=black]", el).hidden = d.mode === "black";
+          $("[data-act=off]", el).hidden = d.mode === "unused";
+          $("[data-act=forget]", el).hidden = s.connected;
+          $(".sound", el).hidden = !page;
+        }
+      }
+
+      let updateBusy = ""; // what is going on right now, shown in place of the result
+      function renderUpdate(state) {
+        const u = state.update;
+        $("#update-status").textContent =
+          updateBusy ||
+          (u.latest
+            ? `Version ${u.latest} is available. This is version ${state.version}.`
+            : u.checked
+              ? `This is the latest version (${state.version}).`
+              : `This is version ${state.version}.`);
+        $("#update-install").hidden = !u.latest || !!updateBusy;
+        $("#update-go").textContent = `Install version ${u.latest}`;
+      }
+
+      function renderSettings(state) {
+        renderUpdate(state);
+        const net = state.network;
+        const all = net.listening === ALL;
+        const hosts = all
+          ? net.addresses.map((a) => a.address)
+          : [net.listening];
+        $("#urls").replaceChildren(
+          ...hosts.map((h) => {
+            const li = document.createElement("li");
+            const url = `http://${h}:${net.port}`;
+            li.append(
+              Object.assign(document.createElement("a"), {
+                href: url,
+                textContent: url,
+              }),
+            );
+            const adaptor = net.addresses.find((a) => a.address === h);
+            if (adaptor) li.append(` (${adaptor.name})`);
+            return li;
+          }),
+        );
+        say(
+          $("#listen-note"),
+          net.chosen === net.listening
+            ? ""
+            : `The chosen address ${net.chosen} is not on this machine at the moment, so the page is answering on every address instead.`,
+        );
+
+        // Rebuild the list only when the addresses change, so an open menu is not disturbed.
+        const select = $("#listen");
+        const signature = JSON.stringify([net.addresses, net.chosen]);
+        if (signature !== lastAddresses) {
+          lastAddresses = signature;
+          const option = (value, text) =>
+            Object.assign(document.createElement("option"), {
+              value,
+              textContent: text,
+            });
+          const options = [
+            option(ALL, `Every address (${ALL})`),
+            ...net.addresses.map((a) =>
+              option(a.address, `${a.address} (${a.name})`),
+            ),
+          ];
+          if (
+            net.chosen !== ALL &&
+            !net.addresses.some((a) => a.address === net.chosen)
+          )
+            options.push(option(net.chosen, `${net.chosen} (not available)`));
+          select.replaceChildren(...options);
+          select.value = net.chosen;
+          // Someone who already narrowed it to one address sees the choice straight away.
+          if (net.chosen !== ALL) showListenForm(true);
+          $("#listen-change").textContent =
+            net.chosen === ALL
+              ? "Answer on one address only"
+              : "Change which address it answers on";
+        }
+        select.dataset.chosen = net.chosen;
+        select.dataset.port = net.port;
+        $("#listen-apply").disabled = select.value === net.chosen;
+
+        $("#token-section").hidden = !state.token;
+        $("#open-access").hidden = !!state.token;
+        $("#token-show").textContent = state.token || "";
+      }
+
+      // Redrawn only when it changes, so a button being pressed is not replaced under the finger.
+      let historyUrls = [];
+      let pageNames = {};
+      let shownHistory = null;
+      let naming = false; // a name is being typed: leave the list alone until it is saved or cancelled
+      function renderHistory(state) {
+        if (naming) return;
+        const urls = (historyUrls = state.recent);
+        pageNames = state.names;
+        const screens = state.screens
+          .filter((s) => s.connected)
+          .map((s) => ({ key: s.key, title: s.title, url: s.url }));
+        const signature = JSON.stringify([urls, screens, pageNames]);
+        if (signature === shownHistory) return;
+        shownHistory = signature;
+        const list = $("#history-list");
+        const buttons = () => [...list.querySelectorAll("button")];
+        const focused = buttons().indexOf(document.activeElement);
+
+        $("#history-note").textContent = urls.length
+          ? "Every web page that has been shown. Give one a name to find it easily; click it to see the full address."
+          : "No web pages have been shown yet.";
+        $("#history-clear").hidden = !urls.length;
+        const button = (text, label, onClick) => {
+          const b = Object.assign(document.createElement("button"), {
+            type: "button",
+            textContent: text,
+          });
+          b.setAttribute("aria-label", label);
+          b.addEventListener("click", onClick);
+          return b;
+        };
+        list.replaceChildren(
+          ...urls.map((url) => {
+            const li = document.createElement("li");
+            const where = addressLabel(url);
+            const details = document.createElement("details");
+            const summary = document.createElement("summary");
+            summary.append(where);
+            details.append(
+              summary,
+              Object.assign(document.createElement("p"), {
+                className: "full",
+                textContent: url,
+              }),
+            );
+            const row = Object.assign(document.createElement("div"), {
+              className: "row",
+            });
+            if (screens.length)
+              row.append(
+                Object.assign(document.createElement("span"), {
+                  className: "dim",
+                  textContent: "Use on",
+                }),
+              );
+            for (const s of screens) {
+              const showing = s.url === url;
+              const b = button(
+                s.title + (showing ? " ✓" : ""),
+                showing
+                  ? `Showing on ${s.title}`
+                  : `Use on ${s.title}: ${where.firstChild.textContent}`,
+                () => act("screen", { key: s.key, url }, $("#history-error")),
+              );
+              if (showing) b.className = "primary";
+              row.append(b);
+            }
+            const remove = button(
+              "Remove",
+              `Remove ${where.firstChild.textContent} from the history`,
+              () => act("history", { url }, $("#history-error")),
+            );
+            remove.className = "link";
+
+            // Naming: a link that turns into a small form in the same row.
+            const form = Object.assign(document.createElement("form"), {
+              className: "row",
+              hidden: true,
+            });
+            const box = Object.assign(document.createElement("input"), {
+              type: "text",
+              maxLength: 60,
+              placeholder: "For example: MPRO multiviewer",
+            });
+            box.setAttribute("aria-label", "Name for this page");
+            const save = Object.assign(document.createElement("button"), {
+              className: "primary",
+              textContent: "Save",
+            });
+            const editing = (on) => {
+              naming = on;
+              form.hidden = !on;
+              row.hidden = on;
+              if (on) {
+                box.value = pageNames[url] || "";
+                box.focus();
+              } else rename.focus();
+            };
+            const rename = button(
+              pageNames[url] ? "Rename" : "Name",
+              `Name ${where.firstChild.textContent}`,
+              () => editing(true),
+            );
+            rename.className = "link rename";
+            form.append(
+              box,
+              save,
+              button("Cancel", "Cancel", () => editing(false)),
+            );
+            form.addEventListener("submit", (e) => {
+              e.preventDefault();
+              naming = false; // let the saved name be drawn
+              act("name", { url, name: box.value }, $("#history-error"));
+            });
+
+            row.append(rename, remove);
+            li.append(details, row, form);
+            return li;
+          }),
+        );
+        // Keep the keyboard where it was after the list is redrawn.
+        if (focused >= 0) (buttons()[focused] || $("#close-history")).focus();
+      }
+
+      let lastState = null;
+      function render(state) {
+        // The app was updated while this tab was open: fetch the new page to match it.
+        if (loadedVersion && loadedVersion !== state.version)
+          return location.reload();
+        loadedVersion = state.version;
+        // Keep the token this browser holds in step, for example after it is changed here.
+        if (state.token && state.token !== token) setToken(state.token);
+        showSignedOut(false);
+        $("#host").textContent = `${state.host} · version ${state.version}`;
+        renderHistory(state);
+        lastState = state;
+        renderScreens(state);
+        renderSettings(state);
+      }
+
+      async function poll() {
+        if (!signedOut) {
+          try {
+            render(await api("state"));
+            if ($("#banner").textContent === "Cannot reach Screen Wall")
+              say($("#banner"), "");
+          } catch (e) {
+            if (e.status === 401) showSignedOut(true);
+            else say($("#banner"), "Cannot reach Screen Wall");
+          }
+        }
+        setTimeout(poll, 2000);
+      }
+
+      $("#identify").addEventListener("click", () => act("identify", {}));
+
+      $("#signin").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        setToken($("#token").value.trim());
+        signedOut = false;
+        try {
+          render(await api("state"));
+          say($("#banner"), "");
+          $("#token").value = "";
+        } catch (err) {
+          showSignedOut(true);
+          say(
+            $("#banner"),
+            err.status === 401
+              ? "That token is not right."
+              : "Cannot reach Screen Wall",
+          );
+        }
+      });
+
+      // ---- Remote control: a picture of one screen that passes mouse moves and clicks on to it ----
+      let remoteKey = null;
+      const picture = $("#remote-picture");
+      async function refreshPicture() {
+        const key = remoteKey;
+        try {
+          const res = await fetch(
+            "/api/snapshot?key=" + encodeURIComponent(key),
+            { headers: { "X-Token": token } },
+          );
+          if (!res.ok) throw new Error((await res.json()).error);
+          const url = URL.createObjectURL(await res.blob());
+          if (key !== remoteKey) return URL.revokeObjectURL(url);
+          URL.revokeObjectURL(picture.src);
+          picture.src = url;
+          say($("#remote-error"), "");
+        } catch (e) {
+          if (key === remoteKey) say($("#remote-error"), e.message);
+        }
+        if (key === remoteKey) setTimeout(refreshPicture, 1000);
+      }
+      function openRemote(key, title) {
+        remoteKey = key;
+        $("#remote-title").textContent = title;
+        picture.removeAttribute("src");
+        say($("#remote-error"), "");
+        $("#remote").showModal();
+        refreshPicture();
+      }
+      const sendPointer = (e, click) => {
+        const box = picture.getBoundingClientRect();
+        const clamp = (n) => Math.min(1, Math.max(0, n));
+        return act(
+          "pointer",
+          {
+            key: remoteKey,
+            x: clamp((e.clientX - box.left) / box.width),
+            y: clamp((e.clientY - box.top) / box.height),
+            click,
+          },
+          $("#remote-error"),
+        );
+      };
+      let lastMove = 0;
+      picture.addEventListener("pointermove", (e) => {
+        if (Date.now() - lastMove < 250) return; // a few a second is plenty to wake a page's controls
+        lastMove = Date.now();
+        sendPointer(e, false);
+      });
+      picture.addEventListener("click", (e) => sendPointer(e, true));
+      $("#close-remote").addEventListener("click", () => $("#remote").close());
+      $("#remote").addEventListener("close", () => {
+        // Take the mouse off the page, so its controls fade away again.
+        act("pointer", { key: remoteKey, leave: true }, $("#remote-error"));
+        remoteKey = null;
+      });
+
+      // ---- History ----
+      $("#history").addEventListener("close", () => {
+        naming = false;
+        shownHistory = null; // redraw, in case a name was half typed
+      });
+      $("#open-history").addEventListener("click", () => {
+        say($("#history-error"), "");
+        $("#history").showModal();
+      });
+      $("#close-history").addEventListener("click", () =>
+        $("#history").close(),
+      );
+      $("#history-clear").addEventListener("click", () =>
+        act("history", { all: true }, $("#history-error")),
+      );
+
+      // ---- Settings ----
+      const settingsError = $("#settings-error");
+      function showListenForm(on) {
+        $("#listen-form").hidden = !on;
+        $("#listen-change").hidden = on;
+      }
+      function showTokenForm(on) {
+        $("#token-form").hidden = !on;
+        $("#token-change").hidden = on;
+        $("#token-new").value = "";
+        if (on) $("#token-new").focus();
+      }
+      $("#open-settings").addEventListener("click", () => {
+        say(settingsError, "");
+        showTokenForm(false);
+        showListenForm($("#listen").dataset.chosen !== ALL);
+        $("#settings").showModal();
+        update({}, "Looking for a newer version…");
+      });
+
+      // Asks the laptop to look for an update, or to install the one it found.
+      async function update(body, busy) {
+        updateBusy = busy;
+        $("#update-status").textContent = busy;
+        $("#update-install").hidden = true;
+        const ok = await act("update", body, settingsError);
+        // After a successful install the app restarts; keep saying so until this page reloads itself.
+        if (!(ok && body.install)) updateBusy = "";
+        if (lastState) renderUpdate(lastState);
+        return ok;
+      }
+      $("#update-go").addEventListener("click", () =>
+        update(
+          { install: true },
+          "Downloading and installing. This page reloads when the new version is running…",
+        ),
+      );
+      $("#close-settings").addEventListener("click", () =>
+        $("#settings").close(),
+      );
+      $("#listen-change").addEventListener("click", () => showListenForm(true));
+      $("#token-change").addEventListener("click", () => showTokenForm(true));
+      $("#token-cancel").addEventListener("click", () => showTokenForm(false));
+
+      $("#listen").addEventListener("change", (e) => {
+        $("#listen-apply").disabled =
+          e.target.value === e.target.dataset.chosen;
+      });
+      $("#listen-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const select = $("#listen");
+        const host = select.value;
+        if (!(await act("listen", { host }, settingsError))) return;
+        // If this page was reached through an address that is about to stop answering, follow it.
+        if (host !== ALL && location.hostname !== host) {
+          say(
+            settingsError,
+            `Moving to http://${host}:${select.dataset.port} …`,
+          );
+          setTimeout(
+            () =>
+              (location.href = `http://${host}:${select.dataset.port}/#token=${encodeURIComponent(token)}`),
+            1500,
+          );
+        }
+      });
+
+      $("#token-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (await act("token", { token: $("#token-new").value }, settingsError))
+          showTokenForm(false);
+      });
+      $("#log-download").addEventListener("click", async () => {
+        try {
+          const res = await fetch("/api/log", {
+            headers: { "X-Token": token },
+          });
+          if (!res.ok) throw new Error((await res.json()).error);
+          const link = Object.assign(document.createElement("a"), {
+            href: URL.createObjectURL(await res.blob()),
+            download: "screen-wall.log",
+          });
+          link.click();
+          URL.revokeObjectURL(link.href);
+        } catch (e) {
+          say(settingsError, e.message);
+        }
+      });
+      $("#token-generate").addEventListener("click", async () => {
+        if (await act("token", { generate: true }, settingsError))
+          showTokenForm(false);
+      });
+
+      poll();
+    </script>
+  </body>
+</html>

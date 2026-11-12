@@ -1,0 +1,49 @@
+{
+  "name": "screen-wall",
+  "productName": "Screen Wall",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Puts a URL full screen on each HDMI output, controlled from a web page on the LAN",
+  "author": "Dataworks",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test",
+    "dist": "electron-builder --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.3.0",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "live.dataworks.screen-wall",
+    "files": [
+      "main.js",
+      "config.js",
+      "screens.js",
+      "server.js",
+      "lib.js",
+      "ui.html",
+      "updater.js"
+    ],
+    "win": {
+      "target": "nsis",
+      "artifactName": "Screen-Wall-Setup-${version}.${ext}"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "electronFuses": {
+      "runAsNode": false,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "onlyLoadAppFromAsar": true,
+      "grantFileProtocolExtraPrivileges": false
+    }
+  },
+  "license": "MIT",
+  "repository": "github:Dataworks-Technology/Screen-Wall"
+}
