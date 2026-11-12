@@ -30,6 +30,9 @@ const LIVE_VIDEOS = `[...document.querySelectorAll("video")]
       trackMuted: track ? track.muted : null, // true = nothing is arriving from the sender
       trackState: track ? track.readyState : "none",
       fullscreen: !!document.fullscreenElement,
+      // false = our preload did not run in this frame, so its connections cannot be read
+      watched: Array.isArray(window.__screenWallPeers),
+      connections: (window.__screenWallPeers || []).length,
     };
   })`;
 
@@ -74,7 +77,6 @@ const connected = new Set(); // keys of screens whose display is plugged in
 let quitting = false;
 let syncTimer = null;
 let pointerHidden = true;
-let identifyUntil = 0;
 
 function rt(key) {
   if (!runtime.has(key))
@@ -118,18 +120,6 @@ function hidePointer(r, hide) {
         css && !wc.isDestroyed() && wc.removeInsertedCSS(css).catch(() => {}),
     );
     r.pointerCss = null;
-  }
-}
-
-// Windows lifts the taskbar above even an always-on-top window whenever the
-// taskbar is used or flashes, and leaves it there. Put the pages back on top
-// every couple of seconds, except while the identify names are up.
-function keepOnTop() {
-  if (WINDOWED || Date.now() < identifyUntil) return;
-  for (const r of runtime.values()) {
-    if (!r.win || r.win.isDestroyed()) continue;
-    r.win.setAlwaysOnTop(true, "screen-saver");
-    r.win.moveTop(); // does not take the keyboard
   }
 }
 
@@ -307,9 +297,12 @@ function checkVideo(s, r, videos) {
       : Promise.resolve();
   if (r.still < FROZEN_PROBES) return;
   log(
-    `${s.key} video froze for ${(FROZEN_PROBES * PROBE_EVERY_MS) / 1000}s, reloading the page.`,
+    `${s.key} (${titleOf(s)}) video froze for ${(FROZEN_PROBES * PROBE_EVERY_MS) / 1000}s, reloading the page.`,
     JSON.stringify(frozen),
   );
+  // Start counting afresh, so the next probe does not report this stall a second time.
+  r.frames = null;
+  r.still = 0;
   const win = r.win;
   noted.then(() => r.win === win && load(s, r)); // reload once the numbers are written down
 }
@@ -328,15 +321,20 @@ function noteReceived(r, bytes) {
 
 function logWebrtc(s, r) {
   const stalled = r.still;
-  return Promise.all(
+  const stats = Promise.all(
     r.win.webContents.mainFrame.framesInSubtree.map((f) =>
       f.executeJavaScript(WEBRTC_STATS).catch(() => []),
     ),
-  )
-    .then((stats) =>
+  ).then((all) => JSON.stringify(all.flat()));
+  // A struggling page can take its time to answer; the reload must not wait on it.
+  const tooSlow = new Promise((done) =>
+    setTimeout(done, 3000, "no answer within 3s"),
+  );
+  return Promise.race([stats, tooSlow])
+    .then((answer) =>
       log(
-        `${s.key} video stalled (check ${stalled} of ${FROZEN_PROBES}), WebRTC:`,
-        JSON.stringify(stats.flat()),
+        `${s.key} (${titleOf(s)}) video stalled (check ${stalled} of ${FROZEN_PROBES}), WebRTC:`,
+        answer,
       ),
     )
     .catch(() => {});
@@ -423,7 +421,6 @@ function start() {
   sync();
   setInterval(probe, PROBE_EVERY_MS);
   watchPointer();
-  setInterval(keepOnTop, 2000);
 }
 
 // Every known screen with its settings, whether its display is plugged in, and what it is doing.
@@ -544,7 +541,6 @@ async function frameRates() {
 // Shows each display's name on the display itself, so you can tell the outputs apart.
 function identify() {
   const control = controlUrls().join("  ");
-  identifyUntil = Date.now() + 6000;
   for (const d of screen.getAllDisplays()) {
     const s = cfg.screens.find((x) => x.id === d.id);
     const title = s ? titleOf(s) : d.label || "?";

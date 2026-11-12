@@ -52,7 +52,7 @@ To reach the app on the laptop itself, start it a second time: it offers to open
 - The laptop's displays are stopped from sleeping while it runs.
 - A window closed by accident (Alt+F4) is put back within a second.
 - A live video feed (WebRTC) that stops showing new pictures for 30 seconds has its page reloaded, even though the page itself is still responding. Each time is written to the log.
-- The pages are put back on top of everything else every two seconds, so the Windows taskbar or a notification cannot stay in front of one.
+- The pages sit above the Windows taskbar, but Windows can still lift the taskbar in front when it is used. Set the taskbar to hide automatically on the laptop.
 - Pop-ups, permission prompts (camera, location, notifications) and "leave this page?" dialogs are refused. A page's own full-screen button is allowed.
 
 Faults are written to `screen-wall.log` in the settings folder.
