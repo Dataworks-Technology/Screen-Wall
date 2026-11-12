@@ -108,7 +108,16 @@ function isNewer(a, b) {
   return !x.suffix && !!y.suffix;
 }
 
+// The total bytes this machine has received, from the output of Windows'
+// "netstat -e". The words are translated on other-language Windows, so this
+// reads the first row of two numbers, which is always the byte counts.
+function receivedBytes(netstatOutput) {
+  const row = /^\D*?(\d+)\s+(\d+)\s*$/m.exec(String(netstatOutput));
+  return row ? Number(row[1]) : null;
+}
+
 module.exports = {
+  receivedBytes,
   isNewer,
   validateUrl,
   matchDisplays,

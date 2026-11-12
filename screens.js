@@ -2,6 +2,7 @@
 // them when displays come and go. Nothing outside this file touches a window;
 // the control server uses the functions exported at the bottom.
 const { app, BrowserWindow, screen, session } = require("electron");
+const path = require("node:path");
 const { cfg, log, save, controlUrls } = require("./config");
 const { validateUrl, matchDisplays, backoffMs, httpError } = require("./lib");
 
@@ -31,6 +32,42 @@ const LIVE_VIDEOS = `[...document.querySelectorAll("video")]
       fullscreen: !!document.fullscreenElement,
     };
   })`;
+
+// Run inside every frame when a live video has stalled: what each WebRTC
+// connection has received and decoded so far. Taken twice, twenty seconds
+// apart, the numbers that kept rising show where the pictures stopped.
+const WEBRTC_STATS = `Promise.all(
+  (window.__screenWallPeers || [])
+    .filter((pc) => pc.connectionState !== "closed")
+    .map(async (pc) => {
+      const video = [];
+      for (const s of (await pc.getStats()).values())
+        if (s.type === "inbound-rtp" && s.kind === "video")
+          video.push({
+            packetsReceived: s.packetsReceived,
+            packetsLost: s.packetsLost,
+            framesReceived: s.framesReceived,
+            framesDecoded: s.framesDecoded,
+            framesDropped: s.framesDropped,
+            keyFramesDecoded: s.keyFramesDecoded,
+            keyFramesRequested: s.pliCount,
+            freezes: s.freezeCount,
+            decoder: s.decoderImplementation,
+            hardwareDecoder: s.powerEfficientDecoder,
+          });
+      return { connection: pc.connectionState, ice: pc.iceConnectionState, video };
+    }),
+)`;
+
+// Run inside every frame: the bytes its WebRTC connections have received so far.
+const WEBRTC_BYTES = `Promise.all(
+  (window.__screenWallPeers || []).map(async (pc) => {
+    let bytes = 0;
+    for (const s of (await pc.getStats()).values())
+      if (s.type === "inbound-rtp") bytes += s.bytesReceived || 0;
+    return bytes;
+  }),
+).then((all) => all.reduce((a, b) => a + b, 0))`;
 
 const runtime = new Map(); // screen key -> { win, bounds, loaded, loadStarted, status, attempt, retryTimer, probing }
 const connected = new Set(); // keys of screens whose display is plugged in
@@ -117,6 +154,8 @@ function load(s, r) {
   r.loadStarted = Date.now();
   r.frames = null;
   r.still = 0;
+  r.received = null;
+  r.mbps = null;
   r.status = s.url ? "loading" : "black";
   // Failures arrive through did-fail-load, which schedules the retry.
   r.win.loadURL(s.url || "about:blank").catch(() => {});
@@ -148,6 +187,8 @@ function createWindow(s, r) {
       contextIsolation: true,
       nodeIntegration: false,
       backgroundThrottling: false,
+      preload: path.join(__dirname, "preload.js"), // see that file: it only watches WebRTC
+      nodeIntegrationInSubFrames: true, // run the preload in embedded frames too; pages still get no Node
     },
   });
   if (!WINDOWED) win.setAlwaysOnTop(true, "screen-saver"); // above the taskbar and notifications
@@ -259,12 +300,46 @@ function checkVideo(s, r, videos) {
       ? videos.filter((v, i) => v.frames === before[i])
       : [];
   r.still = frozen.length ? r.still + 1 : 0;
+  // Noted when the stall is first seen and again when giving up on it.
+  const noted =
+    r.still === 1 || r.still === FROZEN_PROBES
+      ? logWebrtc(s, r)
+      : Promise.resolve();
   if (r.still < FROZEN_PROBES) return;
   log(
     `${s.key} video froze for ${(FROZEN_PROBES * PROBE_EVERY_MS) / 1000}s, reloading the page.`,
     JSON.stringify(frozen),
   );
-  load(s, r);
+  const win = r.win;
+  noted.then(() => r.win === win && load(s, r)); // reload once the numbers are written down
+}
+
+// Turns the running total of bytes a page's video feeds have received into a
+// rate. It covers WebRTC video and sound only, not the rest of the page.
+function noteReceived(r, bytes) {
+  const now = Date.now();
+  const before = r.received;
+  r.received = { bytes, at: now };
+  r.mbps =
+    before && bytes > 0 && bytes >= before.bytes // no bytes at all = a page with no live video
+      ? ((bytes - before.bytes) * 8) / (now - before.at) / 1000
+      : null;
+}
+
+function logWebrtc(s, r) {
+  const stalled = r.still;
+  return Promise.all(
+    r.win.webContents.mainFrame.framesInSubtree.map((f) =>
+      f.executeJavaScript(WEBRTC_STATS).catch(() => []),
+    ),
+  )
+    .then((stats) =>
+      log(
+        `${s.key} video stalled (check ${stalled} of ${FROZEN_PROBES}), WebRTC:`,
+        JSON.stringify(stats.flat()),
+      ),
+    )
+    .catch(() => {});
 }
 
 function replaceWindow(s, r, why) {
@@ -293,6 +368,17 @@ function probe() {
         replaceWindow(s, r, `did not answer for ${HANG_MS / 1000}s`);
     }, HANG_MS);
     const frames = win.webContents.mainFrame.framesInSubtree;
+    Promise.all(
+      frames.map((f) => f.executeJavaScript(WEBRTC_BYTES).catch(() => 0)),
+    )
+      .then((bytes) => {
+        if (r.win === win)
+          noteReceived(
+            r,
+            bytes.reduce((a, b) => a + b, 0),
+          );
+      })
+      .catch(() => {});
     Promise.all(
       frames.map((f) => f.executeJavaScript(LIVE_VIDEOS).catch(() => [])),
     )
@@ -347,6 +433,7 @@ function list() {
     title: titleOf(s),
     connected: connected.has(s.key),
     status: rt(s.key).status,
+    mbps: rt(s.key).mbps ?? null, // megabits a second of live video arriving, where there is any
   }));
 }
 
@@ -424,6 +511,36 @@ function pointer(key, { x, y, click, leave }) {
   wc.sendInputEvent({ type: "mouseUp", ...at, button: "left", clickCount: 1 });
 }
 
+// How smoothly each page is drawing right now: the frames it produced per
+// second over two seconds. null where there is no page to measure.
+async function frameRates() {
+  const count = `new Promise((done) => {
+    let frames = 0, counting = true;
+    const tick = () => { frames++; if (counting) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+    setTimeout(() => { counting = false; done(frames / 2); }, 2000);
+  })`;
+  const giveUp = new Promise((done) => setTimeout(done, 5000, null));
+  return Promise.all(
+    cfg.screens.map(async (s) => {
+      const r = rt(s.key);
+      const measurable = r.win && !r.win.isDestroyed() && r.status === "ok";
+      return {
+        screen: titleOf(s),
+        status: r.status,
+        connected: connected.has(s.key),
+        videoMbps: r.mbps ?? null,
+        fps: measurable
+          ? await Promise.race([
+              r.win.webContents.executeJavaScript(count).catch(() => null),
+              giveUp,
+            ])
+          : null,
+      };
+    }),
+  );
+}
+
 // Shows each display's name on the display itself, so you can tell the outputs apart.
 function identify() {
   const control = controlUrls().join("  ");
@@ -459,4 +576,5 @@ module.exports = {
   identify,
   snapshot,
   pointer,
+  frameRates,
 };

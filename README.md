@@ -29,6 +29,8 @@ On the laptop itself the mouse works on the pages directly. The pointer is hidde
 
 A page's own mute button only changes that page; the screen stays silent until **Play sound** is ticked on its card.
 
+A card showing a live video feed says how fast that video is arriving (`video arriving at 6.2 Mbit/s`), measured over the last ten seconds. This counts WebRTC video and sound only, not the rest of the page. The line under the title at the top gives the download rate of the whole laptop, including anything else running on it.
+
 Buttons only appear when they apply: a screen that is not in use offers just **Show** and **Black screen**.
 
 **Settings** (top right) holds the things you rarely touch:
@@ -57,16 +59,22 @@ Faults are written to `screen-wall.log` in the settings folder.
 
 ## When a feed freezes
 
+The downloaded log starts with a reading of the laptop taken at that moment: whether graphics acceleration is on, each display's resolution, the frames per second each page is managing, and how hard each of the app's processes is working. Download it while the wall is being slow.
+
 The log says which kind of freeze it was. Download it from **Settings → Fault log** on the control page, from any device; on the laptop it is `screen-wall.log` in the settings folder.
 
-| What the log shows at the time of the freeze                | What it means                                                                                 |
-| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `video froze … "trackMuted":true`                           | Nothing was arriving from the sender: the feed, the network, or the page not reconnecting.    |
-| `video froze … "trackMuted":false`                          | Video was arriving but not being decoded: the laptop's video decoder.                         |
-| `GPU process gone`                                          | The graphics driver fell over.                                                                |
-| Nothing, though the picture on the screen was plainly stuck | Frames were decoded but never reached the display: graphics, or the display adaptor's driver. |
+When a live video stops, two `video stalled … WebRTC:` lines are written twenty seconds apart, then `video froze`, and the page is reloaded. Compare the numbers in the two `stalled` lines:
 
-For the last three, quit Screen Wall and start it by hand with a switch to see whether the freeze goes away: `"Screen Wall.exe" --disable-direct-composition-video-overlays` (stops full-screen video taking a short cut to the display), then `--disable-accelerated-video-decode` (decodes video in software).
+| Between the two lines                                             | What it means                                                                                          |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `packetsReceived` did not rise                                    | Nothing was arriving: the sender, the network, or the page not reconnecting (see `connection`, `ice`). |
+| `packetsReceived` rose, `framesDecoded` did not                   | Video was arriving but not being decoded. `decoder` and `hardwareDecoder` say which decoder was used.  |
+| `keyFramesRequested` rose, `keyFramesDecoded` did not             | The decoder lost its place and asked the sender to start afresh, and the sender never did.             |
+| `framesDecoded` kept rising, or there is no `stalled` line at all | Frames were decoded but never reached the display: graphics, or the display adaptor's driver.          |
+
+`GPU process gone` in the log means the graphics driver fell over. `"trackMuted"` in the `video froze` line is not a reliable sign either way.
+
+To test the decoder or graphics, quit Screen Wall and start it by hand with a switch, to see whether the freeze goes away: `--disable-accelerated-video-decode` (decodes video in software), then `--disable-direct-composition-video-overlays` (stops full-screen video taking a short cut to the display).
 
 ## Settings
 
@@ -134,6 +142,7 @@ The Windows installer can only be built on Windows, or on a machine with Wine.
 | `config.js`  | Settings (`config.json`) and the fault log.                                 |
 | `screens.js` | The windows on the displays, their recovery, and matching displays.         |
 | `server.js`  | The control page and its API. It only reaches windows through `screens.js`. |
+| `preload.js` | Runs in each page shown: keeps track of its WebRTC connections for the log. |
 | `updater.js` | Finds newer releases on GitHub and installs one when asked.                 |
 | `lib.js`     | Pure logic (URL checks, display matching, retry timing), covered by tests.  |
 | `ui.html`    | The control page.                                                           |

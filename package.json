@@ -24,7 +24,8 @@
       "server.js",
       "lib.js",
       "ui.html",
-      "updater.js"
+      "updater.js",
+      "preload.js"
     ],
     "win": {
       "target": "nsis",
