@@ -40,6 +40,13 @@ contextBridge.executeInMainWorld({
         }
         if (s.type !== "inbound-rtp") continue;
         reading.bytes += s.bytesReceived || 0;
+        // Sound arriving: level is 0 to 1, and 0 throughout means the sender is sending silence.
+        if (s.kind === "audio")
+          reading.sound = {
+            packetsReceived: s.packetsReceived,
+            level: s.audioLevel,
+            energy: s.totalAudioEnergy,
+          };
         if (s.kind === "video")
           reading.video.push({
             packetsReceived: s.packetsReceived,

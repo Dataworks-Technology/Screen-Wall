@@ -33,6 +33,9 @@ const LIVE_VIDEOS = `[...document.querySelectorAll("video")]
       // false = our preload did not run in this frame, so its connections cannot be read
       watched: Array.isArray(window.__screenWallPeers),
       connections: (window.__screenWallPeers || []).length,
+      muted: v.muted,
+      volume: v.volume,
+      soundTracks: v.srcObject.getAudioTracks().length,
     };
   })`;
 
@@ -355,10 +358,22 @@ function probe() {
       frames.map((f) => f.executeJavaScript(WEBRTC_READINGS).catch(() => [])),
     )
       .then((readings) => {
-        const bytes = readings
-          .flat()
-          .reduce((sum, peer) => sum + (peer.bytes || 0), 0);
-        if (r.win === win) noteReceived(r, bytes);
+        const peers = readings.flat();
+        const bytes = peers.reduce((sum, peer) => sum + (peer.bytes || 0), 0);
+        if (r.win !== win) return;
+        noteReceived(r, bytes);
+        // A feed whose connection has failed never comes back by itself (the
+        // laptop's network dropped and returned, say): reload it straight away
+        // instead of waiting to see the picture stay still. Not while the page
+        // has another connection that is working.
+        const state = (wanted) => peers.some((p) => p.connection === wanted);
+        if (r.status === "ok" && state("failed") && !state("connected")) {
+          log(
+            `${s.key} (${titleOf(s)}) feed connection failed, reloading the page.`,
+            JSON.stringify(peers),
+          );
+          load(s, r);
+        }
       })
       .catch(() => {});
     Promise.all(
@@ -407,6 +422,12 @@ function start() {
   watchPointer();
 }
 
+function isAudible(r) {
+  return (
+    !!r.win && !r.win.isDestroyed() && r.win.webContents.isCurrentlyAudible()
+  );
+}
+
 // Every known screen with its settings, whether its display is plugged in, and what it is doing.
 function list() {
   return cfg.screens.map((s) => ({
@@ -415,6 +436,7 @@ function list() {
     connected: connected.has(s.key),
     status: rt(s.key).status,
     mbps: rt(s.key).mbps ?? null, // megabits a second of live video arriving, where there is any
+    audible: isAudible(rt(s.key)), // is the page producing sound right now
   }));
 }
 
@@ -519,6 +541,8 @@ async function frameRates() {
         status: r.status,
         connected: connected.has(s.key),
         videoMbps: r.mbps ?? null,
+        soundOn: s.muted === false,
+        audible: isAudible(r),
         videos: await inFrames(LIVE_VIDEOS), // what each live video element has shown
         webrtc: await inFrames(WEBRTC_READINGS), // what each connection has received and decoded
         fps: measurable
