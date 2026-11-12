@@ -67,7 +67,11 @@ if (!app.requestSingleInstanceLock()) {
     log(
       `Screen Wall ${app.getVersion()} starting, Electron ${process.versions.electron}`,
     );
-    log("graphics:", JSON.stringify(app.getGPUFeatureStatus()));
+    // Read ten seconds in: asked any earlier, before the graphics process is up, everything reads as "software".
+    setTimeout(
+      () => log("graphics:", JSON.stringify(app.getGPUFeatureStatus())),
+      10000,
+    );
     lockDownPages();
     powerSaveBlocker.start("prevent-display-sleep");
     if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: true });
