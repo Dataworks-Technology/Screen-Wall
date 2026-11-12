@@ -26,8 +26,10 @@ on:
 permissions:
   contents: read
 
+# A release run gets a group of its own. Sharing one with the build that
+# follows every merge let that build cancel a release started moments later.
 concurrency:
-  group: screen-wall-${{ github.ref }}
+  group: screen-wall-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 jobs:
