@@ -29,6 +29,8 @@ On the laptop itself the mouse works on the pages directly. The pointer is hidde
 
 A page's own mute button only changes that page; the screen stays silent until **Play sound** is ticked on its card.
 
+A card showing a live video feed says how fast that video is arriving (`video arriving at 6.2 Mbit/s`), measured over the last ten seconds. This counts WebRTC video and sound only, not the rest of the page. The line under the title at the top gives the download rate of the whole laptop, including anything else running on it.
+
 Buttons only appear when they apply: a screen that is not in use offers just **Show** and **Black screen**.
 
 **Settings** (top right) holds the things you rarely touch:

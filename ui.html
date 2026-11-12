@@ -944,6 +944,7 @@
             s.label,
             b.width && `${b.width}×${b.height}`,
             s.internal && "the laptop's own display",
+            s.mbps !== null && `video arriving at ${s.mbps.toFixed(1)} Mbit/s`,
           ]
             .filter(Boolean)
             .join(" · ");
@@ -1186,7 +1187,11 @@
         // Keep the token this browser holds in step, for example after it is changed here.
         if (state.token && state.token !== token) setToken(state.token);
         showSignedOut(false);
-        $("#host").textContent = `${state.host} · version ${state.version}`;
+        $("#host").textContent =
+          `${state.host} · version ${state.version}` +
+          (state.downloadMbps === null
+            ? ""
+            : ` · laptop downloading ${state.downloadMbps.toFixed(1)} Mbit/s`);
         renderHistory(state);
         lastState = state;
         renderScreens(state);

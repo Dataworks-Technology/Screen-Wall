@@ -16,7 +16,13 @@ const {
   bindHost,
   controlUrls,
 } = require("./config");
-const { httpError, isLocalRequest, validateToken } = require("./lib");
+const { execFile } = require("node:child_process");
+const {
+  httpError,
+  isLocalRequest,
+  validateToken,
+  receivedBytes,
+} = require("./lib");
 const screens = require("./screens");
 const updater = require("./updater");
 
@@ -68,6 +74,7 @@ function state() {
     recent: cfg.recent,
     names: cfg.names,
     update: updater.info,
+    downloadMbps,
     screens: screens.list(),
     token: cfg.openAccess ? null : cfg.token, // shown so it can be passed to another device
     network: {
@@ -77,6 +84,25 @@ function state() {
       addresses: addresses(),
     },
   };
+}
+
+// How fast the whole laptop is downloading, in megabits a second: everything
+// on it, not only Screen Wall. null until measured, and on anything but Windows.
+let downloadMbps = null;
+let lastReceived = null;
+function measureDownload() {
+  if (process.platform !== "win32") return;
+  execFile("netstat", ["-e"], { windowsHide: true }, (error, output) => {
+    const bytes = error ? null : receivedBytes(output);
+    const now = Date.now();
+    const before = lastReceived;
+    lastReceived = bytes === null ? null : { bytes, at: now };
+    // The counter starts again from nothing now and then; skip that reading.
+    downloadMbps =
+      before && lastReceived && bytes >= before.bytes
+        ? ((bytes - before.bytes) * 8) / (now - before.at) / 1000
+        : null;
+  });
 }
 
 // What is needed to see why a laptop is slow without sitting in front of it.
@@ -92,6 +118,7 @@ async function diagnostics() {
     processor: `${os.cpus()[0].model.trim()} x${os.cpus().length}`,
     memoryGB: Math.round(os.totalmem() / 2 ** 30),
     onBattery: powerMonitor.isOnBatteryPower(),
+    laptopDownloadMbps: downloadMbps,
     graphics: app.getGPUFeatureStatus(), // "software" or "disabled" here means no graphics acceleration
     graphicsCards: gpu.gpuDevice,
     displays: screen.getAllDisplays().map((d) => ({
@@ -216,6 +243,7 @@ function start() {
   // Addresses come and go (DHCP, cables); follow them without a restart.
   setInterval(() => {
     if (server.listening && bound !== bindHost()) rebind();
+    measureDownload();
   }, 10000);
 }
 server.on("listening", () => log("control page:", controlUrls().join(" ")));

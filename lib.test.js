@@ -7,6 +7,7 @@ const {
   isLocalRequest,
   validateToken,
   isNewer,
+  receivedBytes,
 } = require("./lib");
 
 test("validateUrl allows web pages only", () => {
@@ -135,4 +136,17 @@ test("a release is newer than the build it replaces", () => {
   assert.equal(isNewer("1.0.0", "1.0.0"), false);
   assert.equal(isNewer("1.0.0-build.16", "1.0.0"), false);
   assert.equal(isNewer("0.9.9", "1.0.0-build.1"), false);
+});
+
+test("the laptop's received bytes are read from netstat -e", () => {
+  const output = [
+    "Interface Statistics",
+    "",
+    "                           Received            Sent",
+    "",
+    "Bytes                    3521846201       912004533",
+    "Unicast packets             4182736         2210931",
+  ].join("\r\n");
+  assert.equal(receivedBytes(output), 3521846201);
+  assert.equal(receivedBytes("nothing useful"), null);
 });

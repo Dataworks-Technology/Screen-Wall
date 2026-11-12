@@ -59,6 +59,16 @@ const WEBRTC_STATS = `Promise.all(
     }),
 )`;
 
+// Run inside every frame: the bytes its WebRTC connections have received so far.
+const WEBRTC_BYTES = `Promise.all(
+  (window.__screenWallPeers || []).map(async (pc) => {
+    let bytes = 0;
+    for (const s of (await pc.getStats()).values())
+      if (s.type === "inbound-rtp") bytes += s.bytesReceived || 0;
+    return bytes;
+  }),
+).then((all) => all.reduce((a, b) => a + b, 0))`;
+
 const runtime = new Map(); // screen key -> { win, bounds, loaded, loadStarted, status, attempt, retryTimer, probing }
 const connected = new Set(); // keys of screens whose display is plugged in
 let quitting = false;
@@ -144,6 +154,8 @@ function load(s, r) {
   r.loadStarted = Date.now();
   r.frames = null;
   r.still = 0;
+  r.received = null;
+  r.mbps = null;
   r.status = s.url ? "loading" : "black";
   // Failures arrive through did-fail-load, which schedules the retry.
   r.win.loadURL(s.url || "about:blank").catch(() => {});
@@ -302,6 +314,18 @@ function checkVideo(s, r, videos) {
   noted.then(() => r.win === win && load(s, r)); // reload once the numbers are written down
 }
 
+// Turns the running total of bytes a page's video feeds have received into a
+// rate. It covers WebRTC video and sound only, not the rest of the page.
+function noteReceived(r, bytes) {
+  const now = Date.now();
+  const before = r.received;
+  r.received = { bytes, at: now };
+  r.mbps =
+    before && bytes > 0 && bytes >= before.bytes // no bytes at all = a page with no live video
+      ? ((bytes - before.bytes) * 8) / (now - before.at) / 1000
+      : null;
+}
+
 function logWebrtc(s, r) {
   const stalled = r.still;
   return Promise.all(
@@ -344,6 +368,17 @@ function probe() {
         replaceWindow(s, r, `did not answer for ${HANG_MS / 1000}s`);
     }, HANG_MS);
     const frames = win.webContents.mainFrame.framesInSubtree;
+    Promise.all(
+      frames.map((f) => f.executeJavaScript(WEBRTC_BYTES).catch(() => 0)),
+    )
+      .then((bytes) => {
+        if (r.win === win)
+          noteReceived(
+            r,
+            bytes.reduce((a, b) => a + b, 0),
+          );
+      })
+      .catch(() => {});
     Promise.all(
       frames.map((f) => f.executeJavaScript(LIVE_VIDEOS).catch(() => [])),
     )
@@ -398,6 +433,7 @@ function list() {
     title: titleOf(s),
     connected: connected.has(s.key),
     status: rt(s.key).status,
+    mbps: rt(s.key).mbps ?? null, // megabits a second of live video arriving, where there is any
   }));
 }
 
@@ -493,6 +529,7 @@ async function frameRates() {
         screen: titleOf(s),
         status: r.status,
         connected: connected.has(s.key),
+        videoMbps: r.mbps ?? null,
         fps: measurable
           ? await Promise.race([
               r.win.webContents.executeJavaScript(count).catch(() => null),
