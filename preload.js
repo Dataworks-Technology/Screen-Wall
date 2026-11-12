@@ -52,6 +52,17 @@ contextBridge.executeInMainWorld({
             freezes: s.freezeCount,
             decoder: s.decoderImplementation,
             hardwareDecoder: s.powerEfficientDecoder,
+            size: `${s.frameWidth}x${s.frameHeight}`,
+            framesPerSecond: s.framesPerSecond,
+            // How long a frame takes to decode, and how long it waits in the buffer before being shown.
+            decodeMsPerFrame: s.framesDecoded
+              ? Math.round((s.totalDecodeTime / s.framesDecoded) * 10000) / 10
+              : null,
+            bufferMs: s.jitterBufferEmittedCount
+              ? Math.round(
+                  (s.jitterBufferDelay / s.jitterBufferEmittedCount) * 1000,
+                )
+              : null,
           });
       }
       return reading;

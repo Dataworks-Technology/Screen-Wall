@@ -506,11 +506,21 @@ async function frameRates() {
     cfg.screens.map(async (s) => {
       const r = rt(s.key);
       const measurable = r.win && !r.win.isDestroyed() && r.status === "ok";
+      const inFrames = (script) =>
+        measurable
+          ? Promise.all(
+              r.win.webContents.mainFrame.framesInSubtree.map((f) =>
+                f.executeJavaScript(script).catch(() => []),
+              ),
+            ).then((all) => all.flat())
+          : [];
       return {
         screen: titleOf(s),
         status: r.status,
         connected: connected.has(s.key),
         videoMbps: r.mbps ?? null,
+        videos: await inFrames(LIVE_VIDEOS), // what each live video element has shown
+        webrtc: await inFrames(WEBRTC_READINGS), // what each connection has received and decoded
         fps: measurable
           ? await Promise.race([
               r.win.webContents.executeJavaScript(count).catch(() => null),
