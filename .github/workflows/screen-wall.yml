@@ -74,6 +74,22 @@ jobs:
         shell: bash
         run: npm version "$(node -p "require('./package.json').version")-build.${GITHUB_RUN_NUMBER}" --no-git-tag-version
 
+      # mpv plays SRT streams (see player.js). The build is pinned and checked
+      # against its SHA-256; a copy is kept in this repo's releases because the
+      # upstream project deletes old builds.
+      - name: Fetch the player
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCHIVE: mpv-x86_64-20261111-git-bcde6b93cc.7z
+          SHA256: f259b5fd4b5c395617c948a4fadcdf55bba1c5282fb7c13e88626b3f71072baf
+        run: |
+          gh release download mpv-20261111 --repo "$GITHUB_REPOSITORY" --pattern "$ARCHIVE" --dir "$RUNNER_TEMP"
+          echo "$SHA256  $RUNNER_TEMP/$ARCHIVE" | sha256sum -c -
+          7z e "$RUNNER_TEMP/$ARCHIVE" -oplayer mpv.exe d3dcompiler_43.dll
+          mv player/mpv.exe player/screen-wall-player.exe
+          player/screen-wall-player.exe --list-protocols | grep -q 'srt://' || { echo "This mpv build cannot play SRT"; exit 1; }
+
       - name: Build installer
         run: npm run dist -- --win
 

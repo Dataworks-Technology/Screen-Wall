@@ -6,6 +6,7 @@ const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const { log } = require("./config");
+const player = require("./player");
 const { httpError, isNewer } = require("./lib");
 
 // SCREEN_WALL_UPDATE_API points the check at a stand-in server, for testing.
@@ -71,6 +72,7 @@ async function install() {
   const file = path.join(app.getPath("temp"), path.basename(installer.name));
   fs.writeFileSync(file, data);
   log(`installing version ${info.latest} from ${file}`);
+  player.stopAll(); // a running player would lock its file against the installer
   // /S: no questions. --force-run: start the new version when done.
   spawn(file, ["--updated", "/S", "--force-run"], {
     detached: true,
