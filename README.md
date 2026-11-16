@@ -156,18 +156,19 @@ The Windows installer can only be built on Windows, or on a machine with Wine.
 
 ## Code
 
-| File         | What it holds                                                               |
-| ------------ | --------------------------------------------------------------------------- |
-| `main.js`    | Start-up: single instance, the local dialog, page lock-down.                |
-| `config.js`  | Settings (`config.json`) and the fault log.                                 |
-| `screens.js` | The windows on the displays, their recovery, and matching displays.         |
-| `server.js`  | The control page and its API. It only reaches windows through `screens.js`. |
-| `preload.js` | Runs in each page shown: keeps track of its WebRTC connections for the log. |
-| `updater.js` | Finds newer releases on GitHub and installs one when asked.                 |
-| `player.js`  | Plays SRT streams with mpv, inside a screen's window, and restarts them.    |
-| `lib.js`     | Pure logic (URL checks, display matching, retry timing), covered by tests.  |
-| `ui.html`    | The control page.                                                           |
-| `release.js` | Chooses the next version for the release workflow.                          |
+| File         | What it holds                                                                                  |
+| ------------ | ---------------------------------------------------------------------------------------------- |
+| `main.js`    | Start-up: single instance, the local dialog, page lock-down.                                   |
+| `config.js`  | Settings (`config.json`) and the fault log.                                                    |
+| `screens.js` | The windows on the displays, their recovery, and matching displays.                            |
+| `server.js`  | The control page and its API. It only reaches windows through `screens.js`.                    |
+| `preload.js` | Runs in each page shown: keeps track of its WebRTC connections for the log.                    |
+| `updater.js` | Finds newer releases on GitHub and installs one when asked.                                    |
+| `player.js`  | Plays SRT streams with mpv, inside a screen's window, and restarts them.                       |
+| `fonts/`     | Nunito Sans and Outfit, the Dataworks typefaces, for the control page (SIL Open Font License). |
+| `lib.js`     | Pure logic (URL checks, display matching, retry timing), covered by tests.                     |
+| `ui.html`    | The control page.                                                                              |
+| `release.js` | Chooses the next version for the release workflow.                                             |
 
 The installer is built with Electron's fuses set so the app cannot be run as plain Node or with debugging flags. Dependabot raises a pull request when Electron has an update; merge those promptly, since the app shows other people's web pages.
 

@@ -26,7 +26,8 @@
       "ui.html",
       "updater.js",
       "preload.js",
-      "player.js"
+      "player.js",
+      "fonts/*"
     ],
     "win": {
       "target": "nsis",
