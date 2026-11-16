@@ -621,13 +621,13 @@
 
         <form class="show-form">
           <label class="field">
-            <span>Web page to show</span>
+            <span>Web page or SRT stream to show</span>
             <div class="row">
               <input
                 class="url"
                 type="text"
                 inputmode="url"
-                placeholder="https://…"
+                placeholder="https://… or srt://…"
                 autocomplete="off"
                 spellcheck="false"
                 role="combobox"
@@ -781,7 +781,7 @@
           mode,
           pill: "Retrying",
           style: "bad",
-          problem: `The page is not loading (${s.status}). Trying again automatically.`,
+          problem: `The ${/^srt:/i.test(s.url) ? "stream is not playing" : "page is not loading"} (${s.status}). Trying again automatically.`,
         };
       }
 
@@ -983,7 +983,7 @@
           $("[data-act=off]", el).hidden = d.mode === "unused";
           $("[data-act=forget]", el).hidden = s.connected;
           $(".sound", el).hidden = !page;
-          $(".fill", el).hidden = !page;
+          $(".fill", el).hidden = !page || /^srt:/i.test(s.url); // mpv always fills the screen
         }
       }
 

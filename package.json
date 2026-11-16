@@ -25,11 +25,18 @@
       "lib.js",
       "ui.html",
       "updater.js",
-      "preload.js"
+      "preload.js",
+      "player.js"
     ],
     "win": {
       "target": "nsis",
-      "artifactName": "Screen-Wall-Setup-${version}.${ext}"
+      "artifactName": "Screen-Wall-Setup-${version}.${ext}",
+      "extraResources": [
+        {
+          "from": "player",
+          "to": "player"
+        }
+      ]
     },
     "mac": {
       "target": "dmg"

@@ -10,12 +10,16 @@ const {
   receivedBytes,
 } = require("./lib");
 
-test("validateUrl allows web pages only", () => {
+test("validateUrl allows web pages and SRT streams only", () => {
   assert.equal(
     validateUrl("https://example.com/a?b=1"),
     "https://example.com/a?b=1",
   );
   assert.equal(validateUrl("  example.com/view "), "https://example.com/view");
+  assert.equal(
+    validateUrl("srt://203.0.113.7:9000?mode=caller&latency=200000"),
+    "srt://203.0.113.7:9000?mode=caller&latency=200000",
+  );
   assert.equal(
     validateUrl("http://192.168.1.5:3000"),
     "http://192.168.1.5:3000/",

@@ -20,8 +20,8 @@ function validateUrl(input) {
   } catch {
     throw badRequest("Not a valid URL");
   }
-  if (url.protocol !== "http:" && url.protocol !== "https:")
-    throw badRequest("Only http and https URLs are allowed");
+  if (!["http:", "https:", "srt:"].includes(url.protocol))
+    throw badRequest("Only http, https and srt addresses are allowed");
   return url.href;
 }
 

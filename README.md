@@ -43,6 +43,15 @@ Buttons only appear when they apply: a screen that is not in use offers just **S
 
 The same history appears under a card's **Web page to show** box when you click in it, and narrows as you type. Typing matches a page's name and any part of its address, so `multiviewer mpro` finds the multiviewer page for that division. Pick one, then press **Show**.
 
+### SRT streams
+
+A screen can show an SRT stream instead of a web page: paste its `srt://` address into **Web page or SRT stream to show**, e.g. `srt://203.0.113.7:9000?mode=caller&latency=200000&passphrase=…`. The app plays it with mpv, a video player that comes with the installer, full screen on that display. **Play sound** and **Remote control** (the picture only; clicks do nothing) work as for a page.
+
+- The address uses FFmpeg's SRT options, which are not always VLC's: `latency` is in microseconds (200000 = 200 ms), and `passphrase` must be 10 to 79 characters.
+- In listener mode (`srt://0.0.0.0:9000?mode=listener`), Windows Firewall asks once to let `screen-wall-player.exe` receive connections. Allow it on private networks.
+- A stream that drops, freezes for 30 seconds, or shows nothing for a minute is started again: after 2s, 4s, 8s, 16s, then every 30s. Each time is written to the log, with any passphrase hidden.
+- The player is mpv, licensed under the GPL; see `player/README.txt` for its source.
+
 To reach the app on the laptop itself, start it a second time: it offers to open the control page or quit.
 
 ## What keeps it running
@@ -94,7 +103,7 @@ Other devices need a token the first time they open the control page; they remem
 
 To look it up, open the control page in a browser on the laptop itself (`http://localhost:8080`). The laptop is never asked for the token, and the page shows it under **Settings**, where it can also be changed. Starting Screen Wall a second time on the laptop also shows it, with a button that opens the page.
 
-The page is plain HTTP, so the token can be read by anyone able to capture traffic on the network; it keeps out the casually curious, not a determined attacker. Only `http` and `https` URLs are accepted.
+The page is plain HTTP, so the token can be read by anyone able to capture traffic on the network; it keeps out the casually curious, not a determined attacker. Only `http`, `https` and `srt` addresses are accepted.
 
 ## Installing on Windows
 
@@ -147,6 +156,7 @@ The Windows installer can only be built on Windows, or on a machine with Wine.
 | `server.js`  | The control page and its API. It only reaches windows through `screens.js`. |
 | `preload.js` | Runs in each page shown: keeps track of its WebRTC connections for the log. |
 | `updater.js` | Finds newer releases on GitHub and installs one when asked.                 |
+| `player.js`  | Plays SRT streams with mpv, inside a screen's window, and restarts them.    |
 | `lib.js`     | Pure logic (URL checks, display matching, retry timing), covered by tests.  |
 | `ui.html`    | The control page.                                                           |
 | `release.js` | Chooses the next version for the release workflow.                          |

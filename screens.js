@@ -5,6 +5,7 @@ const { app, BrowserWindow, screen, session } = require("electron");
 const path = require("node:path");
 const { cfg, log, save, controlUrls } = require("./config");
 const { validateUrl, matchDisplays, backoffMs, httpError } = require("./lib");
+const player = require("./player");
 
 // SCREEN_WALL_WINDOWED=1 opens small ordinary windows instead of taking over displays, for development.
 const WINDOWED = !!process.env.SCREEN_WALL_WINDOWED;
@@ -80,6 +81,7 @@ let pointerHidden = true;
 function rt(key) {
   if (!runtime.has(key))
     runtime.set(key, {
+      key,
       win: null,
       bounds: null,
       loaded: undefined,
@@ -101,6 +103,7 @@ function destroyWindow(r) {
   r.probing = false;
   r.pointerCss = null;
   r.status = "off";
+  player.stop(r.key);
   if (win && !win.isDestroyed()) win.destroy();
 }
 
@@ -146,9 +149,30 @@ function load(s, r) {
   r.received = null;
   r.mbps = null;
   r.status = s.url ? "loading" : "black";
+  // A stream plays in mpv, drawn inside this window, which stays black behind it.
+  const stream = player.isStream(s.url);
+  if (stream)
+    player.play(s.key, {
+      url: s.url,
+      muted: s.muted !== false,
+      wid: handleOf(r.win),
+    });
+  else player.stop(s.key);
   // Failures arrive through did-fail-load, which schedules the retry.
-  r.win.loadURL(s.url || "about:blank").catch(() => {});
+  r.win.loadURL(s.url && !stream ? s.url : "about:blank").catch(() => {});
 }
+
+// The native window handle mpv draws into: an HWND on Windows, an X11 window id on Linux.
+function handleOf(win) {
+  const h = win.getNativeWindowHandle();
+  return String(h.length >= 8 ? h.readBigUInt64LE() : h.readUInt32LE());
+}
+
+// What a screen is doing: for a stream, what its player says; otherwise its page.
+const statusOf = (s, r) =>
+  player.isStream(s.url) && r.win && r.status !== "off"
+    ? player.status(s.key)
+    : r.status;
 
 // Pages fail for boring reasons (venue internet drops, a feed restarts), so
 // keep trying for ever rather than leave an error on a screen.
@@ -230,6 +254,7 @@ function apply(s) {
     destroyWindow(r);
   if (!r.win) createWindow(s, r);
   r.win.webContents.setAudioMuted(s.muted !== false);
+  player.setMuted(s.key, s.muted !== false);
   if (r.loaded !== s.url) load(s, r);
 }
 
@@ -366,6 +391,7 @@ function probe() {
     const r = rt(s.key);
     const win = r.win;
     if (!win || win.isDestroyed()) continue;
+    if (player.isStream(s.url)) player.check(s.key).catch(() => {});
     if (r.status === "loading" && Date.now() - r.loadStarted > STUCK_MS) {
       replaceWindow(s, r, `still loading after ${STUCK_MS / 1000}s`);
       continue;
@@ -430,7 +456,20 @@ const esc = (text) =>
 
 // Call once, when Electron is ready.
 function start() {
-  app.on("before-quit", () => (quitting = true));
+  app.on("before-quit", () => {
+    quitting = true;
+    player.stopAll();
+  });
+  player.clearLeftovers();
+  // A restarted graphics process makes Chromium a new drawing window, which
+  // would sit in front of the players: start them again on top of it.
+  app.on("child-process-gone", (_e, details) => {
+    if (details.type !== "GPU") return;
+    for (const s of cfg.screens) {
+      const r = rt(s.key);
+      if (player.isStream(s.url) && r.win && !r.win.isDestroyed()) load(s, r);
+    }
+  });
   // A URL that is a file rather than a page would otherwise pop a Save dialog on the laptop.
   session.defaultSession.on("will-download", (e, _item, wc) => {
     e.preventDefault();
@@ -458,9 +497,13 @@ function list() {
     ...s,
     title: titleOf(s),
     connected: connected.has(s.key),
-    status: rt(s.key).status,
-    mbps: rt(s.key).mbps ?? null, // megabits a second of live video arriving, where there is any
-    audible: isAudible(rt(s.key)), // is the page producing sound right now
+    status: statusOf(s, rt(s.key)),
+    ...(player.isStream(s.url)
+      ? { mbps: player.mbps(s.key), audible: player.audible(s.key) }
+      : {
+          mbps: rt(s.key).mbps ?? null, // megabits a second of live video arriving, where there is any
+          audible: isAudible(rt(s.key)), // is the page producing sound right now
+        }),
   }));
 }
 
@@ -517,7 +560,12 @@ function windowOf(key) {
 // Taken only when asked for, and never two at once for the same screen.
 async function snapshot(key) {
   const r = windowOf(key);
-  r.shot ||= r.win.webContents.capturePage().finally(() => (r.shot = null));
+  const s = findScreen(key);
+  r.shot ||= (
+    player.isStream(s.url)
+      ? player.snapshot(s.key)
+      : r.win.webContents.capturePage()
+  ).finally(() => (r.shot = null));
   const image = await r.shot;
   if (image.isEmpty()) throw httpError(503, "No picture available yet");
   return image.resize({ width: 960 }).toJPEG(70);
@@ -566,6 +614,13 @@ async function frameRates() {
               ),
             ).then((all) => all.flat())
           : [];
+      if (player.isStream(s.url) && r.win)
+        return {
+          screen: titleOf(s),
+          connected: connected.has(s.key),
+          soundOn: s.muted === false,
+          stream: await player.reading(s.key),
+        };
       return {
         screen: titleOf(s),
         status: r.status,
