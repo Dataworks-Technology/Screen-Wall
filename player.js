@@ -1,5 +1,5 @@
-// Plays a stream (SRT) on a screen with mpv, drawn inside that screen's black
-// window, since Chromium cannot play SRT. One mpv per screen, restarted when
+// Plays a stream (SRT) on a screen with mpv, in its own full-screen window
+// over that screen's black one, since Chromium cannot play SRT. One mpv per screen, restarted when
 // the stream drops, freezes or never starts, for as long as it takes.
 const { app, nativeImage } = require("electron");
 const { spawn, execFileSync } = require("node:child_process");
@@ -21,7 +21,7 @@ const STUCK_MS = 60000; // no picture position for this long: start again
 const FROZEN_CHECKS = 3; // the picture not moving for this many checks: start again
 const STEADY_MS = 60000; // a stream that played this long starts its retries from the beginning
 
-const players = new Map(); // screen key -> { proc, url, muted, wid, pipe, attempt, timer, started, pos, still, status, tail }
+const players = new Map(); // screen key -> { proc, url, muted, place, pipe, attempt, timer, started, pos, still, status, tail }
 
 const isStream = (url) => /^srt:/i.test(url || "");
 // The log can be downloaded from the control page; keep stream passwords out of it.
@@ -49,7 +49,7 @@ function run(key, p) {
     EXE,
     [
       "--no-config",
-      `--wid=${p.wid}`,
+      ...p.place,
       "--ytdl=no",
       "--no-osc",
       "--osd-level=0",
@@ -88,10 +88,10 @@ function run(key, p) {
   proc.on("close", (code, signal) => end(`ended (${signal || code})`));
 }
 
-// Starts (or restarts) a stream on a screen, inside the window with handle wid.
-function play(key, { url, muted, wid }) {
+// Starts (or restarts) a stream on a screen; place is mpv's window options.
+function play(key, { url, muted, place }) {
   stop(key);
-  const p = { url, muted, wid, pipe: pipeFor(key), attempt: 0 };
+  const p = { url, muted, place, pipe: pipeFor(key), attempt: 0 };
   players.set(key, p);
   run(key, p);
 }

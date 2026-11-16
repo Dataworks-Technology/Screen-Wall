@@ -150,23 +150,45 @@ function load(s, r) {
   r.received = null;
   r.mbps = null;
   r.status = s.url ? "loading" : "black";
-  // A stream plays in mpv, drawn inside this window, which stays black behind it.
+  // A stream plays in mpv's own window over this one, which stays black
+  // behind it for the moment the player restarts. This window must not be
+  // always on top then, or it would cover the player.
   const stream = player.isStream(s.url);
+  if (!WINDOWED) r.win.setAlwaysOnTop(!stream, "screen-saver");
   if (stream)
     player.play(s.key, {
       url: s.url,
       muted: s.muted !== false,
-      wid: handleOf(r.win),
+      place: placeOn(s, r),
     });
   else player.stop(s.key);
   // Failures arrive through did-fail-load, which schedules the retry.
   r.win.loadURL(s.url && !stream ? s.url : "about:blank").catch(() => {});
 }
 
-// The native window handle mpv draws into: an HWND on Windows, an X11 window id on Linux.
-function handleOf(win) {
-  const h = win.getNativeWindowHandle();
-  return String(h.length >= 8 ? h.readBigUInt64LE() : h.readUInt32LE());
+// Where mpv puts the picture. On the wall: its own borderless window, always
+// on top, full screen on the display it is placed over. Drawing inside our
+// window instead left the screen black on Windows: Chromium's own drawing
+// covers it. Windows positions are in physical pixels, not Electron's.
+// When developing (small windows on X11), inside the screen's window.
+function placeOn(s, r) {
+  if (WINDOWED) {
+    const h = r.win.getNativeWindowHandle();
+    return [`--wid=${h.length >= 8 ? h.readBigUInt64LE() : h.readUInt32LE()}`];
+  }
+  const b =
+    process.platform === "win32"
+      ? screen.dipToScreenRect(null, s.bounds)
+      : s.bounds;
+  return [
+    `--geometry=${b.width}x${b.height}+${b.x}+${b.y}`, // x may be negative: "+-1920"
+    "--fs",
+    "--ontop",
+    "--no-border",
+    "--force-window=immediate",
+    "--keepaspect-window=no",
+    `--title=Screen Wall ${s.key}`,
+  ];
 }
 
 // What a screen is doing: for a stream, what its player says; otherwise its page.
@@ -462,15 +484,6 @@ function start() {
     player.stopAll();
   });
   player.clearLeftovers();
-  // A restarted graphics process makes Chromium a new drawing window, which
-  // would sit in front of the players: start them again on top of it.
-  app.on("child-process-gone", (_e, details) => {
-    if (details.type !== "GPU") return;
-    for (const s of cfg.screens) {
-      const r = rt(s.key);
-      if (player.isStream(s.url) && r.win && !r.win.isDestroyed()) load(s, r);
-    }
-  });
   // A URL that is a file rather than a page would otherwise pop a Save dialog on the laptop.
   session.defaultSession.on("will-download", (e, _item, wc) => {
     e.preventDefault();

@@ -164,7 +164,7 @@ The Windows installer can only be built on Windows, or on a machine with Wine.
 | `server.js`  | The control page and its API. It only reaches windows through `screens.js`.                    |
 | `preload.js` | Runs in each page shown: keeps track of its WebRTC connections for the log.                    |
 | `updater.js` | Finds newer releases on GitHub and installs one when asked.                                    |
-| `player.js`  | Plays SRT streams with mpv, inside a screen's window, and restarts them.                       |
+| `player.js`  | Plays SRT streams with mpv, full screen over a screen's window, and restarts them.             |
 | `fonts/`     | Nunito Sans and Outfit, the Dataworks typefaces, for the control page (SIL Open Font License). |
 | `lib.js`     | Pure logic (URL checks, display matching, retry timing), covered by tests.                     |
 | `ui.html`    | The control page.                                                                              |
