@@ -74,10 +74,19 @@ async function install() {
   log(`installing version ${info.latest} from ${file}`);
   player.stopAll(); // a running player would lock its file against the installer
   // /S: no questions. --force-run: start the new version when done.
-  spawn(file, ["--updated", "/S", "--force-run"], {
-    detached: true,
-    stdio: "ignore",
-  }).unref();
+  try {
+    spawn(file, ["--updated", "/S", "--force-run"], {
+      detached: true,
+      stdio: "ignore",
+    }).unref();
+  } catch (e) {
+    // Seen as "spawn UNKNOWN" when Windows Security stops the installer from running.
+    log("could not start the installer:", e.message);
+    throw httpError(
+      502,
+      `Windows would not start the installer (${e.code || e.message}). Windows Security may have blocked it: look under Protection history there. The downloaded installer is ${file}.`,
+    );
+  }
   setTimeout(() => app.quit(), 1000); // after the reply to the control page has gone out
 }
 
