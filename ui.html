@@ -441,28 +441,6 @@
         gap: 12px;
         padding: 14px 16px 16px;
       }
-      .source {
-        display: flex;
-        gap: 10px;
-        align-items: baseline;
-        min-width: 0;
-      }
-      .source .what {
-        min-width: 0;
-        display: grid;
-      }
-      .source .what > * {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .source .what strong {
-        font-size: 1.05rem;
-      }
-      .source .what span {
-        font-size: 0.86rem;
-        color: var(--muted);
-      }
       .kind {
         flex: none;
         padding: 1px 7px;
@@ -471,19 +449,53 @@
         font: 600 0.78rem/1.4 var(--display);
         color: var(--muted);
       }
+      /* Two lines, always, so the rows below line up from card to card. */
+      .desk > .source {
+        display: grid;
+        min-width: 0;
+      }
+      .desk > .source > *,
       .facts {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px 16px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .source-title {
+        font-size: 1.05rem;
+        line-height: 1.4;
+      }
+      .source-detail {
+        font-size: 0.86rem;
+        color: var(--muted);
+      }
+      .rename-form {
+        height: 44px;
+        align-items: center;
+      }
+      .rename-form input {
+        min-width: 0;
+      }
+      .glass .note.problem {
+        color: var(--lamp-stop);
+        font-size: 0.95rem;
+      }
+      .switches {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      label.switch:has(input:disabled) {
+        opacity: 0.45;
+        cursor: default;
+      }
+      label.switch input:disabled {
+        cursor: default;
+      }
+      .facts {
         font-size: 0.85rem;
         color: var(--muted);
       }
       /* The main action across the full width, the everyday ones in an even row under it. */
-      .actions {
-        display: grid;
-        gap: 8px;
-      }
-      .actions button {
+      .desk button {
         justify-content: center;
         min-width: 0;
         overflow: hidden;
@@ -1003,6 +1015,9 @@
       <div id="screens"></div>
     </main>
 
+    <!-- Every monitor has the same rows at the same heights, whatever it is
+         doing, so they line up across the wall. Buttons that do not apply are
+         disabled rather than removed, and problems are shown on the picture. -->
     <template id="monitor">
       <article class="monitor" data-tally="off">
         <div class="glass">
@@ -1016,6 +1031,10 @@
           <span class="lamp"></span>
         </div>
         <div class="desk">
+          <div class="source">
+            <strong class="source-title"></strong>
+            <span class="source-detail"></span>
+          </div>
           <form class="rename-form" hidden>
             <input
               type="text"
@@ -1027,54 +1046,38 @@
             <button class="primary">Save</button>
             <button type="button" data-act="cancel-rename">Cancel</button>
           </form>
-          <div class="source">
-            <span class="kind" hidden></span>
-            <div class="what">
-              <strong></strong>
-              <span></span>
-            </div>
-          </div>
-          <p class="problem" hidden></p>
-          <div class="actions">
-            <button type="button" class="primary" data-act="source">
-              Change what's showing
-            </button>
+          <button type="button" class="primary" data-act="source">
+            Change what's showing
+          </button>
+          <div class="even">
+            <button type="button" data-act="black">Black</button>
+            <button type="button" data-act="reload">Reload</button>
             <button
               type="button"
-              class="wide"
-              data-act="restore"
-              hidden
-            ></button>
-            <button type="button" class="danger" data-act="forget">
-              Forget this screen
+              data-act="remote"
+              title="Remote control: see this screen and click on its page"
+            >
+              Remote
             </button>
-            <div class="even">
-              <button type="button" data-act="black">Black</button>
-              <button type="button" data-act="reload">Reload</button>
-              <button
-                type="button"
-                data-act="remote"
-                title="Remote control: see this screen and click on its page"
-              >
-                Remote
-              </button>
-              <details class="more">
-                <summary aria-label="More for this screen">More</summary>
-                <div class="menu">
-                  <button type="button" data-act="rename">Rename screen</button>
-                  <button type="button" data-act="off">
-                    Stop showing (desktop appears)
-                  </button>
-                </div>
-              </details>
-            </div>
+            <details class="more">
+              <summary aria-label="More for this screen">More</summary>
+              <div class="menu">
+                <button type="button" data-act="rename">Rename screen</button>
+                <button type="button" data-act="off">
+                  Stop showing (desktop appears)
+                </button>
+                <button type="button" class="danger" data-act="forget">
+                  Forget this screen
+                </button>
+              </div>
+            </details>
           </div>
           <div class="switches">
-            <label class="switch sound"
+            <label class="switch"
               ><input type="checkbox" role="switch" class="sound-on" /> Sound
               <span class="state-note"></span
             ></label>
-            <label class="switch fill"
+            <label class="switch"
               ><input type="checkbox" role="switch" class="fill-on" /> Fill the
               screen with the video</label
             >
@@ -1531,46 +1534,56 @@
 
       // ---- The monitors ----
 
-      // What a screen is doing, for its tally lamp and UMD.
+      // What a screen is doing: its tally lamp and UMD word, what to say on
+      // its picture when there is no picture, and its two lines of source.
       function describe(s) {
         const mode =
           s.url === null ? "unused" : s.url === "" ? "black" : "page";
+        const src = mode === "page" ? describeSource(s.url) : null;
+        const d = {
+          mode,
+          title: src ? src.title : mode === "black" ? "Black" : "Nothing",
+          detail: src
+            ? [src.kind === "SRT" ? "SRT stream" : "Web page", src.detail]
+                .filter(Boolean)
+                .join(", ")
+            : mode === "black"
+              ? "Nothing is shown"
+              : "The laptop's desktop shows here",
+        };
         const what = isSrt(s.url) ? "stream" : "page";
         if (!s.connected)
           return {
-            mode,
+            ...d,
             tally: "stop",
             state: "Unplugged",
-            note: "Unplugged",
             problem:
-              "This display is not connected. It picks up where it left off when plugged back in.",
+              "Unplugged. It picks up where it left off when plugged back in.",
           };
         if (mode === "unused")
           return {
-            mode,
+            ...d,
             tally: "off",
             state: "Not in use",
-            note: "Not in use: the laptop's desktop shows here",
+            note: "Not in use",
           };
         if (mode === "black")
-          return { mode, tally: "off", state: "Black", note: "Black" };
-        if (s.status === "ok") return { mode, tally: "go", state: "Showing" };
+          return { ...d, tally: "off", state: "Black", note: "Black" };
+        if (s.status === "ok") return { ...d, tally: "go", state: "Showing" };
         if (s.status === "loading")
-          return { mode, tally: "wait", state: "Loading", note: "Loading…" };
+          return { ...d, tally: "wait", state: "Loading", note: "Loading…" };
         if (s.status === "not a web page")
           return {
-            mode,
+            ...d,
             tally: "stop",
             state: "Problem",
-            note: "Nothing to show",
             problem:
               "This address is a file or a raw stream, not a web page. For an SRT stream, choose SRT stream under Change what's showing.",
           };
         return {
-          mode,
+          ...d,
           tally: "stop",
           state: "Retrying",
-          note: "Retrying…",
           problem: `The ${what} is not ${what === "stream" ? "playing" : "loading"} (${s.status}). Trying again automatically.`,
         };
       }
@@ -1581,6 +1594,7 @@
         const renameForm = $(".rename-form", el);
         card.renaming = (on) => {
           renameForm.hidden = !on;
+          $(".source", el).hidden = on;
           if (on) {
             $(".name", el).value = el.dataset.name;
             $(".name", el).focus();
@@ -1628,6 +1642,7 @@
           const card = cards.get(s.key);
           const el = card.el;
           const d = describe(s);
+          const page = d.mode === "page";
           card.title = s.title;
           // Remembered so Black can be undone with one press.
           if (s.url) card.lastShown = s.url;
@@ -1636,60 +1651,51 @@
           el.dataset.tally = d.tally;
           $(".title", el).textContent = s.title;
           $(".state", el).textContent = d.state;
-          say($(".note", el), d.note || "");
+          const note = $(".note", el);
+          say(note, d.problem || d.note || "");
+          note.classList.toggle("problem", !!d.problem);
           $(".glass", el).classList.toggle("unused", d.mode === "unused");
-          const b = s.bounds || {};
-          if (b.width)
-            $(".glass", el).style.aspectRatio = `${b.width} / ${b.height}`;
-          card.live = s.connected && d.mode === "page" && s.status === "ok";
+          card.live = s.connected && page && s.status === "ok";
           if (!card.live) setPicture(card, null);
 
-          const src = s.url ? describeSource(s.url) : null;
-          $(".source", el).hidden = !src;
-          if (src) {
-            say($(".kind", el), src.kind === "SRT" ? "SRT" : "");
-            $(".what strong", el).textContent = src.title;
-            $(".what strong", el).title = hidePassphrase(s.url);
-            $(".what span", el).textContent = src.detail;
-          }
-          say($(".problem", el), d.problem || "");
+          $(".source-title", el).textContent = d.title;
+          $(".source-title", el).title = page ? hidePassphrase(s.url) : "";
+          $(".source-detail", el).textContent = d.detail;
 
-          $(".facts", el).replaceChildren(
-            ...[
-              s.label,
+          const b = s.bounds || {};
+          $(".facts", el).textContent =
+            [
               b.width && `${b.width}×${b.height}`,
-              s.internal && "The laptop's own display",
-              s.mbps !== null &&
-                `Video arriving at ${s.mbps.toFixed(1)} Mbit/s`,
+              s.mbps !== null && `${s.mbps.toFixed(1)} Mbit/s arriving`,
+              s.internal ? "the laptop's own display" : s.label,
             ]
               .filter(Boolean)
-              .map((t) => make("span", { textContent: t })),
-          );
+              .join(", ") || " ";
 
-          $(".sound-on", el).checked = s.muted === false;
-          $(".fill-on", el).checked = !!s.fill;
+          const sound = $(".sound-on", el);
+          sound.checked = s.muted === false;
+          sound.disabled = !page;
+          const fill = $(".fill-on", el);
+          fill.checked = !!s.fill;
+          fill.disabled = !page || isSrt(s.url); // a stream always fills the screen
           $(".state-note", el).textContent =
-            s.muted !== false || d.mode !== "page"
-              ? ""
-              : s.audible
-                ? "playing"
-                : `the ${isSrt(s.url) ? "stream" : "page"} is silent`;
+            s.muted !== false || !page ? "" : s.audible ? "playing" : "silent";
 
-          // Only offer what makes sense for what the screen is doing.
-          const page = d.mode === "page";
-          const restore = $("[data-act=restore]", el);
-          restore.hidden = page || !card.lastShown || !s.connected;
-          if (!restore.hidden)
-            restore.textContent = `Bring back ${describeSource(card.lastShown).title}`;
-          $("[data-act=source]", el).hidden = !s.connected;
-          $("[data-act=reload]", el).hidden = !page || !s.connected;
-          $("[data-act=remote]", el).hidden = !page || !s.connected;
-          $("[data-act=black]", el).hidden = d.mode === "black" || !s.connected;
+          // Black and Bring back share one place.
+          const black = $("[data-act=black], [data-act=restore]", el);
+          const restore = d.mode === "black";
+          black.dataset.act = restore ? "restore" : "black";
+          black.textContent = restore ? "Bring back" : "Black";
+          black.title =
+            restore && card.lastShown
+              ? `Bring back ${describeSource(card.lastShown).title}`
+              : "";
+          black.disabled = !s.connected || (restore && !card.lastShown);
+          $("[data-act=source]", el).disabled = !s.connected;
+          $("[data-act=reload]", el).disabled = !page || !s.connected;
+          $("[data-act=remote]", el).disabled = !page || !s.connected;
           $("[data-act=off]", el).hidden = d.mode === "unused";
           $("[data-act=forget]", el).hidden = s.connected;
-          $(".more", el).hidden = !s.connected;
-          $(".switches", el).hidden = !page;
-          $(".fill", el).hidden = isSrt(s.url); // a stream always fills the screen
         }
       }
 
