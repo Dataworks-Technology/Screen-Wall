@@ -28,6 +28,13 @@ const screens = require("./screens");
 const updater = require("./updater");
 
 const UI = fs.readFileSync(path.join(__dirname, "ui.html"));
+// The control page's typefaces, by file name. Public: the sign-in page needs them too.
+const FONTS = Object.fromEntries(
+  fs
+    .readdirSync(path.join(__dirname, "fonts"))
+    .filter((f) => f.endsWith(".woff2"))
+    .map((f) => [f, fs.readFileSync(path.join(__dirname, "fonts", f))]),
+);
 
 function reply(res, status, body, type = "application/json") {
   const data = type === "application/json" ? JSON.stringify(body) : body;
@@ -224,6 +231,14 @@ const server = http.createServer(async (req, res) => {
     const { pathname, searchParams } = new URL(req.url, "http://localhost");
     if (req.method === "GET" && pathname === "/")
       return reply(res, 200, UI, "text/html; charset=utf-8");
+    const font = pathname.startsWith("/fonts/") && FONTS[pathname.slice(7)];
+    if (req.method === "GET" && font) {
+      res.writeHead(200, {
+        "Content-Type": "font/woff2",
+        "Cache-Control": "max-age=604800",
+      });
+      return res.end(font);
+    }
     if (!pathname.startsWith("/api/")) throw httpError(404, "Not found");
     const local = isLocalRequest(
       req.socket.remoteAddress,

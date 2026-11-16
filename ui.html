@@ -5,35 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Screen Wall</title>
     <style>
+      /* Dataworks' typefaces, served by the app itself (SIL Open Font License, see fonts/). */
+      @font-face {
+        font-family: "Nunito Sans";
+        font-style: normal;
+        font-weight: 400 800;
+        font-display: swap;
+        src: url(/fonts/nunito-sans-latin.woff2) format("woff2");
+        unicode-range:
+          U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+          U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+          U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: "Nunito Sans";
+        font-style: normal;
+        font-weight: 400 800;
+        font-display: swap;
+        src: url(/fonts/nunito-sans-latin-ext.woff2) format("woff2");
+        unicode-range:
+          U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+          U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+          U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+      }
+      @font-face {
+        font-family: "Outfit";
+        font-style: normal;
+        font-weight: 400 700;
+        font-display: swap;
+        src: url(/fonts/outfit-latin.woff2) format("woff2");
+        unicode-range:
+          U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+          U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+          U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: "Outfit";
+        font-style: normal;
+        font-weight: 400 700;
+        font-display: swap;
+        src: url(/fonts/outfit-latin-ext.woff2) format("woff2");
+        unicode-range:
+          U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+          U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+          U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+      }
+      /* Laid out like a monitor wall: each screen is a picture with an
+         under-monitor display (UMD) strip carrying its name and a tally lamp.
+         Everything is served by the laptop: it may have no internet. */
       :root {
         color-scheme: light dark;
-        --bg: #f4f5f7;
-        --card: #fff;
-        --line: #d5d9e0;
-        --text: #16191f;
-        --dim: #5b6472;
-        --accent: #1463d8;
-        --on-accent: #fff;
-        --ok: #17794a;
-        --ok-bg: #dff5ea;
-        --bad: #b3261e;
-        --bad-bg: #fde7e5;
-        --idle-bg: #e6e9ee;
+        --page: #e6e9ee;
+        --panel: #ffffff;
+        --raised: #f2f4f7;
+        --line: #cdd3dc;
+        --ink: #131920;
+        --muted: #556072;
+        --accent: #0a6cc2;
+        --on-accent: #ffffff;
+        --go: #0f7d45;
+        --stop: #c0261f;
+        --wait: #9a5b00;
+        /* The UMD is a device: black glass and lit lamps in either theme. */
+        --umd: #050608;
+        --umd-ink: #f4f6f9;
+        --umd-dim: #8d97a6;
+        --lamp-go: #2fd36b;
+        --lamp-stop: #ff3b30;
+        --lamp-wait: #ffb020;
+        --lamp-off: #39404b;
+        --display: Outfit, system-ui, sans-serif;
+        --text: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+        --radius: 10px;
       }
       @media (prefers-color-scheme: dark) {
         :root {
-          --bg: #111418;
-          --card: #1b1f26;
-          --line: #343b47;
-          --text: #eef0f3;
-          --dim: #a1a9b6;
-          --accent: #6ea8ff;
-          --on-accent: #0b1220;
-          --ok: #5bd39a;
-          --ok-bg: #153426;
-          --bad: #ff8a80;
-          --bad-bg: #40201d;
-          --idle-bg: #2a303a;
+          --page: #1a1f27;
+          --panel: #232a35;
+          --raised: #2c3441;
+          --line: #3a4452;
+          --ink: #eef1f5;
+          --muted: #a3aebd;
+          --accent: #63b5ff;
+          --on-accent: #07111d;
+          --go: #52dc93;
+          --stop: #ff8078;
+          --wait: #ffc45c;
         }
       }
       * {
@@ -42,149 +99,66 @@
       [hidden] {
         display: none !important;
       }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
       body {
         margin: 0;
-        padding: 16px;
-        background: var(--bg);
-        color: var(--text);
-        font:
-          16px/1.45 system-ui,
-          sans-serif;
+        min-height: 100vh;
+        background: var(--page);
+        color: var(--ink);
+        font: 15px/1.45 var(--text);
       }
-      .wrap {
-        max-width: 1100px;
-        margin: 0 auto;
-        display: grid;
-        gap: 16px;
-      }
-      header.top {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .brand {
-        display: flex;
-        gap: 14px;
-        align-items: center;
-      }
-      .logo {
-        height: 56px;
-        width: auto;
-        flex: none;
-      }
-      h1 {
-        font-size: 1.3rem;
-        margin: 0;
-      }
-      h2 {
-        font-size: 1.15rem;
-        margin: 0;
-      }
-      h3 {
-        font-size: 1rem;
-        margin: 0 0 4px;
-      }
+      h1,
+      h2,
+      h3,
       p {
         margin: 0;
       }
-      .dim {
-        color: var(--dim);
-        font-size: 0.9rem;
+      a {
+        color: var(--accent);
       }
-      #banner {
-        color: var(--bad);
-      }
-      #screens {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr));
-        gap: 16px;
-      }
-      .card,
-      .panel {
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        padding: 16px;
-        display: grid;
-        gap: 12px;
-        align-content: start;
-      }
-      .card-head {
-        display: flex;
-        gap: 12px;
-        align-items: flex-start;
-        justify-content: space-between;
-      }
-      .title-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px 10px;
-        align-items: baseline;
-      }
-      .pill {
-        flex: none;
-        padding: 3px 10px;
-        border-radius: 999px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        background: var(--idle-bg);
-        color: var(--dim);
+      .sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
         white-space: nowrap;
       }
-      .pill.ok {
-        background: var(--ok-bg);
-        color: var(--ok);
-      }
-      .pill.bad {
-        background: var(--bad-bg);
-        color: var(--bad);
+      .muted {
+        color: var(--muted);
       }
       .problem {
-        color: var(--bad);
-        font-size: 0.9rem;
+        color: var(--stop);
+        font-weight: 500;
       }
-      label.field {
-        display: grid;
-        gap: 4px;
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
       }
-      label.field > span {
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: var(--dim);
-      }
-      input[type="text"],
-      input[type="password"],
+
+      /* ---- Controls ---- */
+      button,
+      input,
       select {
-        width: 100%;
-        padding: 9px 10px;
         font: inherit;
         color: inherit;
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 6px;
-      }
-      .row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: center;
-      }
-      .row > input,
-      .row > select {
-        flex: 1;
-        width: auto;
-        min-width: 12ch;
       }
       button {
-        padding: 9px 14px;
-        font: inherit;
-        color: inherit;
-        background: transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 38px;
+        padding: 0 14px;
+        background: var(--raised);
         border: 1px solid var(--line);
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: pointer;
+        white-space: nowrap;
+      }
+      button:hover {
+        border-color: var(--muted);
       }
       button:disabled {
         opacity: 0.45;
@@ -196,155 +170,712 @@
         color: var(--on-accent);
         font-weight: 600;
       }
-      button.link {
-        padding: 0;
-        border: 0;
+      button.quiet {
+        background: transparent;
+        border-color: transparent;
         color: var(--accent);
-        font-size: 0.9rem;
-        text-decoration: underline;
+        padding: 0 6px;
       }
-      :focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: 2px;
+      button.quiet:hover {
+        border-color: var(--line);
       }
-      label.option {
-        display: flex;
-        gap: 6px;
-        align-items: center;
+      button.danger {
+        color: var(--stop);
       }
-      ul.urls {
-        margin: 0;
-        padding-left: 1.2em;
-      }
-      #history-list {
-        margin: 16px 0;
-        padding: 0;
-        max-height: 60vh;
-        overflow-y: auto;
-        list-style: none;
-      }
-      #history-list li {
-        display: grid;
-        gap: 8px;
-        padding: 12px 0;
-        border-bottom: 1px solid var(--line);
-      }
-      #history-list summary {
-        cursor: pointer;
-      }
-      #history-list .full {
-        margin: 8px 0 0;
-        font-size: 0.85rem;
-        overflow-wrap: anywhere;
-        user-select: all;
-      }
-      #history-list .rename {
-        margin-left: auto;
-      }
-      /* A web address in two short lines: where it is, then its options cut to one line. */
-      .address {
-        display: inline-grid;
-        max-width: calc(100% - 1.5em);
-        vertical-align: top;
-      }
-      .address > * {
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-      .address .options {
-        font-size: 0.85rem;
-        color: var(--dim);
-      }
-      .show-form {
-        position: relative;
-      }
-      .suggest {
-        position: absolute;
-        z-index: 1;
-        top: 100%;
-        left: 0;
-        right: 0;
-        max-height: 320px;
-        margin: 4px 0 0;
-        padding: 4px;
-        overflow-y: auto;
-        list-style: none;
-        background: var(--card);
+      input[type="text"],
+      input[type="search"],
+      input[type="password"],
+      input[type="number"],
+      select {
+        width: 100%;
+        min-height: 40px;
+        padding: 8px 11px;
+        background: var(--panel);
         border: 1px solid var(--line);
         border-radius: 8px;
-        box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
       }
-      .suggest li {
-        padding: 6px 8px;
-        border-radius: 6px;
+      input::placeholder {
+        color: var(--muted);
+        opacity: 0.8;
+      }
+      label.field {
+        display: grid;
+        gap: 5px;
+      }
+      label.field > span:first-child,
+      fieldset > legend {
+        font-weight: 600;
+        font-size: 0.92rem;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      .row > input {
+        flex: 1;
+        width: auto;
+        min-width: 10ch;
+      }
+      fieldset {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        min-width: 0;
+      }
+
+      /* An on/off switch built on a real checkbox. */
+      label.switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        min-height: 32px;
+      }
+      label.switch input {
+        appearance: none;
+        flex: none;
+        width: 38px;
+        height: 22px;
+        margin: 0;
+        border-radius: 11px;
+        background: var(--line);
+        position: relative;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      label.switch input::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform 0.15s;
+      }
+      label.switch input:checked {
+        background: var(--go);
+      }
+      label.switch input:checked::after {
+        transform: translateX(16px);
+      }
+
+      /* ---- Page frame ---- */
+      .top {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+      }
+      .top-inner {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 10px 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 24px;
+        align-items: center;
+      }
+      .brand {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-right: auto;
+      }
+      .logo {
+        height: 40px;
+        width: auto;
+        flex: none;
+      }
+      .brand h1 {
+        font: 600 1.45rem/1.1 var(--display);
+        letter-spacing: 0.01em;
+      }
+      .brand p {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .network {
+        font-size: 0.85rem;
+        color: var(--muted);
+        text-align: right;
+      }
+      .network strong {
+        display: block;
+        color: var(--ink);
+        font: 600 1.1rem/1.1 var(--display);
+        font-variant-numeric: tabular-nums;
+      }
+      .tools {
+        display: flex;
+        gap: 8px;
+      }
+      #banner {
+        max-width: 1400px;
+        margin: 12px auto 0;
+        padding: 10px 14px;
+        border-radius: 8px;
+        background: var(--stop);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      #screens {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+        gap: 18px;
+      }
+
+      /* ---- A monitor: picture, UMD, then what you can do with it ---- */
+      .monitor {
+        min-width: 0;
+        display: grid;
+        align-content: start;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      .glass {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        background: #000;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+      .glass img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .glass .note {
+        position: relative;
+        padding: 0 16px;
+        text-align: center;
+        color: #c9d0da;
+        font: 500 1.05rem/1.3 var(--display);
+      }
+      .glass.unused {
+        background: repeating-linear-gradient(
+          135deg,
+          #12161c 0 14px,
+          #171c23 14px 28px
+        );
+      }
+      /* Under-monitor display: name in the middle, a tally lamp at each end. */
+      .umd {
+        display: grid;
+        grid-template-columns: 10px 1fr auto 10px;
+        align-items: stretch;
+        gap: 12px;
+        background: var(--umd);
+        color: var(--umd-ink);
+        min-height: 46px;
+      }
+      .lamp {
+        background: var(--lamp-off);
+      }
+      .umd h2 {
+        align-self: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font: 600 1.45rem/1.15 var(--display);
+        letter-spacing: 0.02em;
+      }
+      .umd .state {
+        align-self: center;
+        font: 600 0.95rem/1 var(--display);
+        color: var(--umd-dim);
+      }
+      .monitor[data-tally="go"] .lamp {
+        background: var(--lamp-go);
+      }
+      .monitor[data-tally="go"] .state {
+        color: var(--lamp-go);
+      }
+      .monitor[data-tally="stop"] .lamp {
+        background: var(--lamp-stop);
+      }
+      .monitor[data-tally="stop"] .state {
+        color: var(--lamp-stop);
+      }
+      .monitor[data-tally="wait"] .lamp {
+        background: var(--lamp-wait);
+        animation: blink 1.2s steps(2, jump-none) infinite;
+      }
+      .monitor[data-tally="wait"] .state {
+        color: var(--lamp-wait);
+      }
+      @keyframes blink {
+        50% {
+          background: var(--lamp-off);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .monitor[data-tally="wait"] .lamp {
+          animation: none;
+        }
+        label.switch input,
+        label.switch input::after {
+          transition: none;
+        }
+      }
+      .desk {
+        display: grid;
+        gap: 12px;
+        padding: 14px 16px 16px;
+      }
+      .source {
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+        min-width: 0;
+      }
+      .source .what {
+        min-width: 0;
+        display: grid;
+      }
+      .source .what > * {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .source .what strong {
+        font-size: 1.05rem;
+      }
+      .source .what span {
+        font-size: 0.86rem;
+        color: var(--muted);
+      }
+      .kind {
+        flex: none;
+        padding: 1px 7px;
+        border: 1px solid currentColor;
+        border-radius: 5px;
+        font: 600 0.78rem/1.4 var(--display);
+        color: var(--muted);
+      }
+      .facts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      /* The main action across the full width, the everyday ones in an even row under it. */
+      .actions {
+        display: grid;
+        gap: 8px;
+      }
+      .actions button {
+        justify-content: center;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .even {
+        display: flex;
+        gap: 8px;
+      }
+      .even > * {
+        flex: 1 1 0;
+        min-width: 0;
+      }
+      .even > button {
+        padding: 0 6px;
+      }
+      .switches {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 22px;
+        padding-top: 10px;
+        border-top: 1px solid var(--line);
+      }
+      .switch .state-note {
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+      /* "More" holds what is rarely needed. */
+      details.more {
+        position: relative;
+      }
+      details.more > summary {
+        list-style: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 38px;
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--raised);
         cursor: pointer;
       }
-      .suggest .address {
+      details.more > summary::-webkit-details-marker {
+        display: none;
+      }
+      details.more .menu {
+        position: absolute;
+        z-index: 3;
+        top: calc(100% + 4px);
+        right: 0;
         display: grid;
-        max-width: none;
-      }
-      .suggest li:hover,
-      .suggest li.active {
-        background: var(--idle-bg);
-      }
-      a {
-        color: var(--accent);
-      }
-      code {
-        font:
-          600 1.05rem ui-monospace,
-          monospace;
-        letter-spacing: 0.08em;
-        user-select: all;
-      }
-      #signin {
-        max-width: 440px;
-      }
-      dialog {
-        width: min(560px, calc(100% - 32px));
-        padding: 20px;
-        color: var(--text);
-        background: var(--card);
+        min-width: 210px;
+        padding: 6px;
+        background: var(--panel);
         border: 1px solid var(--line);
-        border-radius: 12px;
+        border-radius: 8px;
+        box-shadow: 0 12px 28px rgb(0 0 0 / 0.28);
       }
+      details.more .menu button {
+        justify-content: flex-start;
+        background: transparent;
+        border-color: transparent;
+      }
+      details.more .menu button:hover {
+        background: var(--raised);
+      }
+      .rename-form {
+        display: flex;
+        gap: 8px;
+      }
+
+      /* ---- Dialogs ---- */
+      dialog {
+        width: min(620px, calc(100% - 24px));
+        max-height: calc(100vh - 24px);
+        padding: 0;
+        color: var(--ink);
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: 0 24px 60px rgb(0 0 0 / 0.4);
+      }
+      dialog::backdrop {
+        background: rgb(5 8 12 / 0.6);
+      }
+      .dialog-head {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+      }
+      .dialog-head h2 {
+        font: 600 1.3rem/1.2 var(--display);
+      }
+      .dialog-body {
+        display: grid;
+        gap: 18px;
+        padding: 18px;
+      }
+      .dialog-body section {
+        display: grid;
+        gap: 10px;
+      }
+      .dialog-body h3 {
+        font-size: 1rem;
+      }
+
+      /* Choosing what a screen shows: three kinds of source as real radios. */
+      .kinds {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        padding: 4px;
+        gap: 4px;
+        background: var(--raised);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+      .kinds label {
+        position: relative;
+        display: grid;
+        place-items: center;
+        min-height: 40px;
+        border-radius: 7px;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: center;
+      }
+      .kinds input {
+        position: absolute;
+        opacity: 0;
+        inset: 0;
+        cursor: pointer;
+      }
+      .kinds label:has(input:checked) {
+        background: var(--panel);
+        box-shadow:
+          0 0 0 1px var(--line),
+          0 2px 6px rgb(0 0 0 / 0.12);
+      }
+      .kinds label:has(input:focus-visible) {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+      .source-form {
+        display: grid;
+        gap: 16px;
+      }
+      .modes {
+        display: grid;
+        gap: 8px;
+        margin-top: 6px;
+      }
+      .modes label {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 2px 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .modes label:has(input:checked) {
+        border-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 9%, transparent);
+      }
+      .modes input {
+        margin: 3px 0 0;
+        accent-color: var(--accent);
+      }
+      .modes small {
+        grid-column: 2;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: 1fr 8.5rem;
+        gap: 10px;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .chips button {
+        min-height: 30px;
+        padding: 0 10px;
+        font-size: 0.88rem;
+        border-radius: 15px;
+      }
+      .chips button[aria-pressed="true"] {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--on-accent);
+      }
+      .unit {
+        position: relative;
+        max-width: 11rem;
+      }
+      .unit input {
+        padding-right: 42px;
+      }
+      .unit span {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        pointer-events: none;
+      }
+      .preview {
+        padding: 9px 11px;
+        border-radius: 8px;
+        background: var(--raised);
+        font:
+          0.84rem/1.4 ui-monospace,
+          Consolas,
+          monospace;
+        overflow-wrap: anywhere;
+        color: var(--muted);
+      }
+      .submit-row {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding-top: 4px;
+      }
+      details.extra > summary {
+        cursor: pointer;
+        color: var(--accent);
+        font-weight: 500;
+      }
+      details.extra[open] > summary {
+        margin-bottom: 10px;
+      }
+
+      /* Saved sources: one press puts one on the screen. */
+      #saved-list {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      #saved-list li {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        overflow: hidden;
+      }
+      #saved-list li.current {
+        border-color: var(--go);
+      }
+      #saved-list .pick {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 2px 10px;
+        align-items: baseline;
+        justify-content: start;
+        min-height: 56px;
+        padding: 8px 12px;
+        text-align: left;
+        white-space: normal;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+      }
+      #saved-list .pick:hover {
+        background: var(--raised);
+      }
+      #saved-list .pick strong,
+      #saved-list .pick .where {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      #saved-list .pick .where {
+        grid-column: 2;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      #saved-list .pick .on {
+        grid-column: 2;
+        font-size: 0.82rem;
+        color: var(--go);
+        font-weight: 600;
+      }
+      #saved-list .item-tools {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 0 6px;
+        border-left: 1px solid var(--line);
+      }
+      #saved-list .item-tools button {
+        min-height: 32px;
+        padding: 0 8px;
+        font-size: 0.88rem;
+      }
+      #saved-list form {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 8px;
+        padding: 8px 12px;
+        border-top: 1px solid var(--line);
+      }
+      .empty {
+        padding: 18px;
+        text-align: center;
+        color: var(--muted);
+        border: 1px dashed var(--line);
+        border-radius: 9px;
+      }
+
       #remote {
-        width: min(1100px, calc(100% - 32px));
+        width: min(1200px, calc(100% - 24px));
       }
       #remote-picture {
         display: block;
         width: 100%;
         min-height: 120px;
-        margin-top: 12px;
         background: #000;
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: crosshair;
         touch-action: none;
       }
-      dialog::backdrop {
-        background: rgb(0 0 0 / 0.5);
+      code.token {
+        font:
+          600 1.25rem ui-monospace,
+          Consolas,
+          monospace;
+        letter-spacing: 0.08em;
+        user-select: all;
       }
-      dialog form,
-      dialog section {
+      ul.urls {
+        margin: 0;
+        padding-left: 1.2em;
+      }
+
+      #signin {
+        max-width: 460px;
+        margin: 10vh auto 0;
+        padding: 24px;
         display: grid;
-        gap: 10px;
+        gap: 14px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 14px;
       }
-      dialog > .sections {
-        display: grid;
-        gap: 22px;
-        margin-top: 16px;
+      #signin h2 {
+        font: 600 1.4rem/1.2 var(--display);
       }
-      .dialog-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+
+      @media (max-width: 640px) {
+        .top-inner {
+          padding: 10px 14px;
+        }
+        main {
+          padding: 14px;
+        }
+        .logo {
+          height: 32px;
+        }
+        .network {
+          text-align: left;
+          order: 3;
+        }
+        .tools {
+          order: 2;
+        }
+        .pair {
+          grid-template-columns: 1fr 6.5rem;
+        }
+        #saved-list .item-tools button span {
+          display: none;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="wrap">
-      <header class="top">
+    <header class="top">
+      <div class="top-inner">
         <div class="brand">
           <svg
             class="logo"
@@ -430,28 +961,33 @@
           </svg>
           <div>
             <h1>Screen Wall</h1>
-            <div id="host" class="dim"></div>
+            <p id="host"></p>
           </div>
         </div>
-        <div class="row" id="tools" hidden>
+        <div class="network" id="network" hidden>
+          Laptop download
+          <strong id="download"></strong>
+        </div>
+        <div class="tools" id="tools" hidden>
           <button
             id="identify"
-            title="Shows each screen's name on the screen itself for a few seconds, so you can tell them apart"
+            title="Shows each screen's name on the screen itself for a few seconds"
           >
             Identify screens
           </button>
-          <button id="open-history">History</button>
           <button id="open-settings">Settings</button>
         </div>
-      </header>
+      </div>
+    </header>
 
-      <div id="banner" role="status" hidden></div>
+    <div id="banner" role="status" hidden></div>
 
-      <form class="panel" id="signin" hidden>
+    <main>
+      <form id="signin" hidden>
         <h2>Enter the access token</h2>
-        <p class="dim">
-          To find it, open this page in a browser on the laptop running Screen
-          Wall. No token is needed there, and the token is shown under Settings.
+        <p class="muted">
+          Open this page in a browser on the laptop running Screen Wall to find
+          it: no token is needed there, and it is shown under Settings.
         </p>
         <div class="row">
           <input
@@ -464,24 +1000,290 @@
         </div>
       </form>
 
-      <main id="screens"></main>
-    </div>
+      <div id="screens"></div>
+    </main>
+
+    <template id="monitor">
+      <article class="monitor" data-tally="off">
+        <div class="glass">
+          <img alt="" hidden />
+          <p class="note"></p>
+        </div>
+        <div class="umd">
+          <span class="lamp"></span>
+          <h2 class="title"></h2>
+          <span class="state"></span>
+          <span class="lamp"></span>
+        </div>
+        <div class="desk">
+          <form class="rename-form" hidden>
+            <input
+              type="text"
+              class="name"
+              maxlength="60"
+              aria-label="Name for this screen"
+              placeholder="For example: Stage left"
+            />
+            <button class="primary">Save</button>
+            <button type="button" data-act="cancel-rename">Cancel</button>
+          </form>
+          <div class="source">
+            <span class="kind" hidden></span>
+            <div class="what">
+              <strong></strong>
+              <span></span>
+            </div>
+          </div>
+          <p class="problem" hidden></p>
+          <div class="actions">
+            <button type="button" class="primary" data-act="source">
+              Change what's showing
+            </button>
+            <button
+              type="button"
+              class="wide"
+              data-act="restore"
+              hidden
+            ></button>
+            <button type="button" class="danger" data-act="forget">
+              Forget this screen
+            </button>
+            <div class="even">
+              <button type="button" data-act="black">Black</button>
+              <button type="button" data-act="reload">Reload</button>
+              <button
+                type="button"
+                data-act="remote"
+                title="Remote control: see this screen and click on its page"
+              >
+                Remote
+              </button>
+              <details class="more">
+                <summary aria-label="More for this screen">More</summary>
+                <div class="menu">
+                  <button type="button" data-act="rename">Rename screen</button>
+                  <button type="button" data-act="off">
+                    Stop showing (desktop appears)
+                  </button>
+                </div>
+              </details>
+            </div>
+          </div>
+          <div class="switches">
+            <label class="switch sound"
+              ><input type="checkbox" role="switch" class="sound-on" /> Sound
+              <span class="state-note"></span
+            ></label>
+            <label class="switch fill"
+              ><input type="checkbox" role="switch" class="fill-on" /> Fill the
+              screen with the video</label
+            >
+          </div>
+          <p class="facts"></p>
+        </div>
+      </article>
+    </template>
+
+    <!-- What a screen shows: a saved source, a web page, or an SRT stream. -->
+    <dialog id="source" aria-labelledby="source-title">
+      <div class="dialog-head">
+        <h2 id="source-title"></h2>
+        <button type="button" data-close>Close</button>
+      </div>
+      <div class="dialog-body">
+        <fieldset class="kinds">
+          <legend class="sr">What to show</legend>
+          <label><input type="radio" name="kind" value="saved" /> Saved</label>
+          <label><input type="radio" name="kind" value="web" /> Web page</label>
+          <label
+            ><input type="radio" name="kind" value="srt" /> SRT stream</label
+          >
+        </fieldset>
+
+        <section data-kind="saved">
+          <input
+            type="search"
+            id="saved-search"
+            placeholder="Find by name or address"
+            aria-label="Find a saved source"
+            autocomplete="off"
+          />
+          <ul id="saved-list"></ul>
+          <p class="empty" id="saved-empty" hidden></p>
+          <div class="row">
+            <span class="hint" id="saved-hint"
+              >Everything that has been shown is saved here. Press one to put it
+              on this screen.</span
+            >
+            <button type="button" class="quiet danger" id="saved-clear">
+              Clear all
+            </button>
+          </div>
+        </section>
+
+        <form class="source-form" data-kind="web" id="web-form">
+          <label class="field">
+            <span>Web address</span>
+            <input
+              type="text"
+              id="web-url"
+              inputmode="url"
+              placeholder="https://…"
+              autocomplete="off"
+              spellcheck="false"
+              required
+            />
+          </label>
+          <label class="field">
+            <span>Name <span class="muted">(optional)</span></span>
+            <input
+              type="text"
+              id="web-name"
+              maxlength="60"
+              placeholder="For example: MPRO multiviewer"
+              autocomplete="off"
+            />
+          </label>
+          <div class="submit-row">
+            <button class="primary show-on"></button>
+          </div>
+        </form>
+
+        <form class="source-form" data-kind="srt" id="srt-form" novalidate>
+          <fieldset>
+            <legend>How it connects</legend>
+            <div class="modes">
+              <label
+                ><input type="radio" name="srt-mode" value="caller" checked />
+                <strong>Connect to the sender</strong>
+                <small
+                  >Caller. The sender is waiting for a connection at an address
+                  you know.</small
+                ></label
+              >
+              <label
+                ><input type="radio" name="srt-mode" value="listener" />
+                <strong>Wait for the sender to connect</strong>
+                <small
+                  >Listener. The sender is set to send to this laptop. Windows
+                  asks once whether to allow it.</small
+                ></label
+              >
+            </div>
+          </fieldset>
+          <div class="pair">
+            <label class="field" id="srt-host-field">
+              <span>Sender address</span>
+              <input
+                type="text"
+                id="srt-host"
+                placeholder="203.0.113.7, or paste an srt:// address"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </label>
+            <label class="field">
+              <span id="srt-port-label">Port</span>
+              <input
+                type="number"
+                id="srt-port"
+                min="1"
+                max="65535"
+                placeholder="9000"
+              />
+            </label>
+          </div>
+          <div class="field">
+            <label class="field" for="srt-latency"><span>Latency</span></label>
+            <div class="row">
+              <div class="unit">
+                <input
+                  type="number"
+                  id="srt-latency"
+                  min="20"
+                  max="8000"
+                  step="10"
+                  value="200"
+                />
+                <span>ms</span>
+              </div>
+              <div class="chips" id="srt-latency-chips">
+                <button type="button" data-ms="120">120</button>
+                <button type="button" data-ms="200">200</button>
+                <button type="button" data-ms="500">500</button>
+                <button type="button" data-ms="1000">1000</button>
+              </div>
+            </div>
+            <p class="hint">
+              More rides out a poor network but delays the picture. The higher
+              of this and the sender's setting is used.
+            </p>
+          </div>
+          <label class="field">
+            <span>Passphrase <span class="muted">(if encrypted)</span></span>
+            <div class="row">
+              <input
+                type="password"
+                id="srt-pass"
+                maxlength="79"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button type="button" id="srt-pass-show" aria-pressed="false">
+                Show
+              </button>
+            </div>
+            <span class="hint"
+              >10 to 79 characters, exactly as on the sender.</span
+            >
+          </label>
+          <details class="extra">
+            <summary>More options</summary>
+            <label class="field">
+              <span
+                >Stream ID
+                <span class="muted">(if the sender asks for one)</span></span
+              >
+              <input
+                type="text"
+                id="srt-streamid"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </label>
+          </details>
+          <label class="field">
+            <span>Name <span class="muted">(optional)</span></span>
+            <input
+              type="text"
+              id="srt-name"
+              maxlength="60"
+              placeholder="For example: Pitch camera"
+              autocomplete="off"
+            />
+          </label>
+          <p class="preview" id="srt-preview" aria-live="polite"></p>
+          <div class="submit-row">
+            <button class="primary show-on"></button>
+          </div>
+        </form>
+        <p class="problem" id="source-error" role="status" hidden></p>
+      </div>
+    </dialog>
 
     <dialog id="settings" aria-labelledby="settings-title">
       <div class="dialog-head">
         <h2 id="settings-title">Settings</h2>
-        <button type="button" id="close-settings">Close</button>
+        <button type="button" data-close>Close</button>
       </div>
-      <div class="sections">
+      <div class="dialog-body">
         <section>
           <h3>Address</h3>
-          <div>
-            <p>Other devices on the network open this page at:</p>
-            <ul class="urls" id="urls"></ul>
-          </div>
+          <p>Other devices on the network open this page at:</p>
+          <ul class="urls" id="urls"></ul>
           <p class="problem" id="listen-note" hidden></p>
           <p>
-            <button type="button" class="link" id="listen-change">
+            <button type="button" class="quiet" id="listen-change">
               Answer on one address only
             </button>
           </p>
@@ -493,7 +1295,7 @@
                 <button class="primary" id="listen-apply">Apply</button>
               </div>
             </label>
-            <p class="dim">
+            <p class="hint">
               Choosing one address stops this page answering on the others, and
               moves you to the chosen address.
             </p>
@@ -502,13 +1304,13 @@
 
         <section id="token-section">
           <h3>Access token</h3>
-          <p><code id="token-show"></code></p>
-          <p class="dim">
+          <p><code class="token" id="token-show"></code></p>
+          <p class="hint">
             Other devices are asked for this the first time they open the page.
             A browser on the laptop itself is never asked.
           </p>
           <p>
-            <button type="button" class="link" id="token-change">
+            <button type="button" class="quiet" id="token-change">
               Change the token
             </button>
           </p>
@@ -532,7 +1334,7 @@
               </button>
               <button type="button" id="token-cancel">Cancel</button>
             </div>
-            <p class="dim">
+            <p class="hint">
               Every other device will be asked for the new token.
             </p>
           </form>
@@ -544,7 +1346,7 @@
             <p>
               <button type="button" class="primary" id="update-go"></button>
             </p>
-            <p class="dim">
+            <p class="hint">
               Every screen goes dark for about a minute while it installs, then
               comes back on its own. Not during a show.
             </p>
@@ -552,16 +1354,16 @@
         </section>
         <section>
           <h3>Fault log</h3>
-          <p class="dim">
+          <p class="hint">
             Everything that went wrong and was recovered from, with the time it
-            happened. The download starts with a reading of how the laptop is
-            performing right now, which takes a few seconds to measure.
+            happened. It starts with a reading of how the laptop is performing
+            right now, which takes a few seconds to measure.
           </p>
           <p>
             <button type="button" id="log-download">Download the log</button>
           </p>
         </section>
-        <p class="dim" id="open-access" hidden>
+        <p class="hint" id="open-access" hidden>
           No token is needed: open access is turned on in config.json.
         </p>
         <p class="problem" id="settings-error" role="status" hidden></p>
@@ -571,127 +1373,32 @@
     <dialog id="remote" aria-labelledby="remote-title">
       <div class="dialog-head">
         <h2 id="remote-title"></h2>
-        <button type="button" id="close-remote">Close</button>
+        <button type="button" data-close>Close</button>
       </div>
-      <p class="dim">
-        Move over the picture and click to use the buttons on the page. The
-        picture updates about once a second.
-      </p>
-      <img id="remote-picture" alt="What this screen is showing" />
-      <p class="problem" id="remote-error" role="status" hidden></p>
-    </dialog>
-
-    <dialog id="history" aria-labelledby="history-title">
-      <div class="dialog-head">
-        <h2 id="history-title">History</h2>
-        <button type="button" id="close-history">Close</button>
+      <div class="dialog-body">
+        <p class="hint" id="remote-hint"></p>
+        <img id="remote-picture" alt="What this screen is showing" />
+        <p class="problem" id="remote-error" role="status" hidden></p>
       </div>
-      <p class="dim" id="history-note"></p>
-      <ul id="history-list"></ul>
-      <button type="button" id="history-clear">Clear all</button>
-      <p class="problem" id="history-error" role="status" hidden></p>
     </dialog>
-
-    <template id="card">
-      <section class="card">
-        <div class="card-head">
-          <div>
-            <div class="title-row">
-              <h2 class="title"></h2>
-              <button type="button" class="link" data-act="rename">
-                Rename
-              </button>
-            </div>
-            <form class="row rename-form" hidden>
-              <input
-                type="text"
-                class="name"
-                maxlength="60"
-                aria-label="Name for this screen"
-              />
-              <button class="primary">Save</button>
-              <button type="button" data-act="cancel-rename">Cancel</button>
-            </form>
-            <div class="meta dim"></div>
-          </div>
-          <span class="pill"></span>
-        </div>
-
-        <p class="problem" hidden></p>
-
-        <form class="show-form">
-          <label class="field">
-            <span>Web page or SRT stream to show</span>
-            <div class="row">
-              <input
-                class="url"
-                type="text"
-                inputmode="url"
-                placeholder="https://… or srt://…"
-                autocomplete="off"
-                spellcheck="false"
-                role="combobox"
-                aria-autocomplete="list"
-                aria-expanded="false"
-              />
-              <button class="primary">Show</button>
-            </div>
-          </label>
-          <ul class="suggest" role="listbox" aria-label="History" hidden></ul>
-        </form>
-
-        <div class="row actions">
-          <button type="button" data-act="reload" title="Load the page again">
-            Reload page
-          </button>
-          <button
-            type="button"
-            data-act="remote"
-            title="See this screen here and click on its page"
-          >
-            Remote control
-          </button>
-          <button
-            type="button"
-            data-act="black"
-            title="Cover the screen with black"
-          >
-            Black screen
-          </button>
-          <button
-            type="button"
-            data-act="off"
-            title="Close what is showing and let the laptop's desktop appear on this screen"
-          >
-            Stop showing
-          </button>
-          <button
-            type="button"
-            data-act="forget"
-            title="Remove this unplugged screen from the list"
-          >
-            Forget this screen
-          </button>
-          <label class="option fill"
-            ><input type="checkbox" class="fill-on" /> Fill the screen with the
-            video</label
-          >
-          <label class="option sound"
-            ><input type="checkbox" class="sound-on" /> Play sound
-            <span class="dim sound-state"></span
-          ></label>
-        </div>
-      </section>
-    </template>
 
     <script>
       const $ = (sel, root = document) => root.querySelector(sel);
+      const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+      const make = (tag, props = {}, ...children) => {
+        const el = Object.assign(document.createElement(tag), props);
+        el.append(...children);
+        return el;
+      };
       const ALL = "0.0.0.0";
-      const cards = new Map(); // screen key -> { el, url } (url = last value the server reported)
+      const cards = new Map(); // screen key -> card (see makeCard)
       let token = "";
       let signedOut = false;
       let lastAddresses = "";
       let loadedVersion = null;
+      let lastState = null;
+      let savedUrls = []; // every source that has been shown, newest first
+      let names = {}; // url -> the name given to it
 
       try {
         token = localStorage.getItem("token") || "";
@@ -732,8 +1439,9 @@
         $("#signin").hidden = !yes;
         $("#screens").hidden = yes;
         $("#tools").hidden = yes;
-        if (yes)
-          for (const d of document.querySelectorAll("dialog[open]")) d.close();
+        $("#network").hidden =
+          yes || !lastState || lastState.downloadMbps === null;
+        if (yes) for (const d of $$("dialog[open]")) d.close();
       }
 
       // Sends a change. Problems are reported in `where` (the page banner unless told otherwise).
@@ -749,167 +1457,139 @@
         }
       }
 
-      // What the screen is doing, in plain words.
+      // ---- Sources: web addresses and SRT streams, in words people use ----
+
+      const isSrt = (url) => /^srt:/i.test(url || "");
+      // A passphrase is never shown, only that there is one.
+      const hidePassphrase = (url) =>
+        String(url).replace(/(passphrase=)[^&]*/gi, "$1•••");
+
+      // The parts of an srt:// address, latency in milliseconds. An address
+      // written for VLC gives latency in milliseconds; FFmpeg's in microseconds.
+      function parseSrt(url) {
+        const u = new URL(url);
+        const q = u.searchParams;
+        const raw = Number(q.get("latency"));
+        return {
+          mode: q.get("mode") === "listener" ? "listener" : "caller",
+          host: u.hostname,
+          port: u.port,
+          latency: raw ? (raw < 1000 ? raw : Math.round(raw / 1000)) : 200,
+          passphrase: q.get("passphrase") || "",
+          streamid: q.get("streamid") || "",
+        };
+      }
+
+      function buildSrt(f) {
+        const host = f.mode === "listener" ? ALL : f.host.trim();
+        const options = [
+          ["mode", f.mode],
+          ["latency", Math.round(Number(f.latency) * 1000)],
+          ["passphrase", f.passphrase],
+          ["streamid", f.streamid],
+        ].filter(([, v]) => v !== "" && v !== null);
+        const query = options
+          .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+          .join("&");
+        return `srt://${host}:${f.port}?${query}`;
+      }
+
+      // How a source is described everywhere: a title, and a line of detail.
+      function describeSource(url) {
+        const name = names[url];
+        if (isSrt(url)) {
+          try {
+            const f = parseSrt(url);
+            const where =
+              f.mode === "listener"
+                ? `Waiting for the sender on port ${f.port}`
+                : `${f.host}:${f.port}`;
+            const detail = [
+              name && where,
+              `${f.latency} ms latency`,
+              f.passphrase && "encrypted",
+              f.streamid && `stream ID ${f.streamid}`,
+            ]
+              .filter(Boolean)
+              .join(", ");
+            return { kind: "SRT", title: name || where, detail };
+          } catch {}
+        }
+        let where = url;
+        try {
+          const u = new URL(url);
+          where = u.host + (u.pathname === "/" ? "" : u.pathname);
+          if (!name && u.search)
+            return {
+              kind: "Web",
+              title: where,
+              detail: hidePassphrase(u.search.slice(1)),
+            };
+        } catch {}
+        return { kind: "Web", title: name || where, detail: name ? where : "" };
+      }
+
+      // ---- The monitors ----
+
+      // What a screen is doing, for its tally lamp and UMD.
       function describe(s) {
         const mode =
           s.url === null ? "unused" : s.url === "" ? "black" : "page";
+        const what = isSrt(s.url) ? "stream" : "page";
         if (!s.connected)
           return {
             mode,
-            pill: "Unplugged",
-            style: "bad",
+            tally: "stop",
+            state: "Unplugged",
+            note: "Unplugged",
             problem:
               "This display is not connected. It picks up where it left off when plugged back in.",
           };
         if (mode === "unused")
-          return { mode, pill: "Not in use", style: "", problem: "" };
+          return {
+            mode,
+            tally: "off",
+            state: "Not in use",
+            note: "Not in use: the laptop's desktop shows here",
+          };
         if (mode === "black")
-          return { mode, pill: "Black", style: "", problem: "" };
-        if (s.status === "ok")
-          return { mode, pill: "Showing", style: "ok", problem: "" };
+          return { mode, tally: "off", state: "Black", note: "Black" };
+        if (s.status === "ok") return { mode, tally: "go", state: "Showing" };
         if (s.status === "loading")
-          return { mode, pill: "Loading", style: "", problem: "" };
+          return { mode, tally: "wait", state: "Loading", note: "Loading…" };
         if (s.status === "not a web page")
           return {
             mode,
-            pill: "Problem",
-            style: "bad",
+            tally: "stop",
+            state: "Problem",
+            note: "Nothing to show",
             problem:
-              "This address is a file or a raw stream, not a web page, so there is nothing to show.",
+              "This address is a file or a raw stream, not a web page. For an SRT stream, choose SRT stream under Change what's showing.",
           };
         return {
           mode,
-          pill: "Retrying",
-          style: "bad",
-          problem: `The ${/^srt:/i.test(s.url) ? "stream is not playing" : "page is not loading"} (${s.status}). Trying again automatically.`,
+          tally: "stop",
+          state: "Retrying",
+          note: "Retrying…",
+          problem: `The ${what} is not ${what === "stream" ? "playing" : "loading"} (${s.status}). Trying again automatically.`,
         };
-      }
-
-      // A web address in two short lines; the whole address is in the tooltip.
-      function addressLabel(url) {
-        const el = Object.assign(document.createElement("span"), {
-          className: "address",
-          title: url,
-        });
-        let where = url;
-        let options = "";
-        try {
-          const u = new URL(url);
-          where = u.host + u.pathname;
-          options = [...u.searchParams]
-            .map(([k, v]) => `${k}=${v}`)
-            .join(" · ");
-        } catch {}
-        // A page that has been given a name shows that, with where it is underneath.
-        if (pageNames[url]) [where, options] = [pageNames[url], where];
-        el.append(
-          Object.assign(document.createElement("strong"), {
-            textContent: where,
-          }),
-        );
-        if (options)
-          el.append(
-            Object.assign(document.createElement("span"), {
-              className: "options",
-              textContent: options,
-            }),
-          );
-        return el;
-      }
-
-      // Pages from the history whose name or address contains every word typed, in any order.
-      function matchHistory(typed) {
-        const words = typed.toLowerCase().split(/\s+/).filter(Boolean);
-        return historyUrls.filter((u) => {
-          const text = `${pageNames[u] || ""} ${u}`.toLowerCase();
-          return words.every((w) => text.includes(w));
-        });
-      }
-
-      // Offers the history under an address box: all of it on focus, narrowed as you type.
-      // Up/Down and Enter, or a click, put an address in the box; it is shown when you press Show.
-      function suggestFromHistory(input, list, id) {
-        let active = -1;
-        list.id = id;
-        input.setAttribute("aria-controls", id);
-        const options = () => [...list.children];
-        const setActive = (i) => {
-          active = i;
-          options().forEach((o, n) => o.classList.toggle("active", n === i));
-          if (i < 0) return input.removeAttribute("aria-activedescendant");
-          input.setAttribute("aria-activedescendant", options()[i].id);
-          options()[i].scrollIntoView({ block: "nearest" });
-        };
-        const close = () => {
-          list.hidden = true;
-          input.setAttribute("aria-expanded", "false");
-          setActive(-1);
-        };
-        const pick = (url) => {
-          input.value = url;
-          close();
-        };
-        const open = (urls) => {
-          list.replaceChildren(
-            ...urls.map((url, i) => {
-              const li = document.createElement("li");
-              li.id = `${id}-${i}`;
-              li.setAttribute("role", "option");
-              li.append(addressLabel(url));
-              li.addEventListener("mousedown", (e) => e.preventDefault()); // keep the box focused
-              li.addEventListener("click", () => pick(url));
-              li.dataset.url = url;
-              return li;
-            }),
-          );
-          list.hidden = !urls.length;
-          input.setAttribute("aria-expanded", String(!!urls.length));
-          setActive(-1);
-        };
-        input.addEventListener("focus", () => open(historyUrls));
-        // A click in a box that already has the keyboard brings the list back.
-        input.addEventListener("click", () => {
-          if (list.hidden) open(historyUrls);
-        });
-        input.addEventListener("input", () => open(matchHistory(input.value)));
-        input.addEventListener("blur", close);
-        input.addEventListener("keydown", (e) => {
-          const count = list.hidden ? 0 : list.children.length;
-          if (e.key === "ArrowDown" && list.hidden) {
-            open(historyUrls);
-          } else if (e.key === "ArrowDown" && count) {
-            setActive((active + 1) % count);
-          } else if (e.key === "ArrowUp" && count) {
-            setActive((active + count - 1) % count);
-          } else if (e.key === "Enter" && active >= 0) {
-            pick(options()[active].dataset.url);
-          } else if (e.key === "Escape" && count) {
-            close();
-          } else return;
-          e.preventDefault();
-        });
       }
 
       function makeCard(key) {
-        const el = $("#card").content.firstElementChild.cloneNode(true);
+        const el = $("#monitor").content.firstElementChild.cloneNode(true);
+        const card = { key, el, lastShown: null, live: false, title: "" };
         const renameForm = $(".rename-form", el);
-        const renaming = (on) => {
+        card.renaming = (on) => {
           renameForm.hidden = !on;
-          $(".title-row", el).hidden = on;
           if (on) {
             $(".name", el).value = el.dataset.name;
             $(".name", el).focus();
           }
         };
-        $(".show-form", el).addEventListener("submit", (e) => {
-          e.preventDefault();
-          act("screen", { key, url: $(".url", el).value });
-        });
-        suggestFromHistory($(".url", el), $(".suggest", el), `suggest-${key}`);
         renameForm.addEventListener("submit", async (e) => {
           e.preventDefault();
           if (await act("screen", { key, name: $(".name", el).value }))
-            renaming(false);
+            card.renaming(false);
         });
         $(".fill-on", el).addEventListener("change", (e) =>
           act("screen", { key, fill: e.target.checked }),
@@ -918,22 +1598,27 @@
           act("screen", { key, muted: !e.target.checked }),
         );
         el.addEventListener("click", (e) => {
-          const what = e.target.dataset.act;
-          if (what === "rename") renaming(true);
-          if (what === "cancel-rename") renaming(false);
+          const what = e.target.closest("[data-act]")?.dataset.act;
+          if (!what) return;
+          $("details.more", el).open = false;
+          if (what === "source") openSource(key);
+          if (what === "rename") card.renaming(true);
+          if (what === "cancel-rename") card.renaming(false);
           if (what === "reload") act("reload", { key });
-          if (what === "remote") openRemote(key, $(".title", el).textContent);
+          if (what === "remote") openRemote(key, card.title);
           if (what === "black") act("screen", { key, url: "" });
+          if (what === "restore") act("screen", { key, url: card.lastShown });
           if (what === "off") act("screen", { key, url: null });
           if (what === "forget") act("forget", { key });
         });
         $("#screens").append(el);
-        return { el, url: undefined };
+        return card;
       }
 
       function renderScreens(state) {
         for (const [key, card] of cards) {
           if (!state.screens.some((s) => s.key === key)) {
+            setPicture(card, null);
             card.el.remove();
             cards.delete(key);
           }
@@ -943,49 +1628,385 @@
           const card = cards.get(s.key);
           const el = card.el;
           const d = describe(s);
+          card.title = s.title;
+          // Remembered so Black can be undone with one press.
+          if (s.url) card.lastShown = s.url;
 
           el.dataset.name = s.name || "";
+          el.dataset.tally = d.tally;
           $(".title", el).textContent = s.title;
+          $(".state", el).textContent = d.state;
+          say($(".note", el), d.note || "");
+          $(".glass", el).classList.toggle("unused", d.mode === "unused");
           const b = s.bounds || {};
-          $(".meta", el).textContent = [
-            s.label,
-            b.width && `${b.width}×${b.height}`,
-            s.internal && "the laptop's own display",
-            s.mbps !== null && `video arriving at ${s.mbps.toFixed(1)} Mbit/s`,
-          ]
-            .filter(Boolean)
-            .join(" · ");
-          $(".pill", el).textContent = d.pill;
-          $(".pill", el).className = "pill " + d.style;
-          say($(".problem", el), d.problem);
+          if (b.width)
+            $(".glass", el).style.aspectRatio = `${b.width} / ${b.height}`;
+          card.live = s.connected && d.mode === "page" && s.status === "ok";
+          if (!card.live) setPicture(card, null);
 
-          // Only overwrite the box when the server value changed, so typing is never interrupted.
-          const url = $(".url", el);
-          if (card.url !== s.url) {
-            card.url = s.url;
-            if (document.activeElement !== url) url.value = s.url || "";
+          const src = s.url ? describeSource(s.url) : null;
+          $(".source", el).hidden = !src;
+          if (src) {
+            say($(".kind", el), src.kind === "SRT" ? "SRT" : "");
+            $(".what strong", el).textContent = src.title;
+            $(".what strong", el).title = hidePassphrase(s.url);
+            $(".what span", el).textContent = src.detail;
           }
+          say($(".problem", el), d.problem || "");
+
+          $(".facts", el).replaceChildren(
+            ...[
+              s.label,
+              b.width && `${b.width}×${b.height}`,
+              s.internal && "The laptop's own display",
+              s.mbps !== null &&
+                `Video arriving at ${s.mbps.toFixed(1)} Mbit/s`,
+            ]
+              .filter(Boolean)
+              .map((t) => make("span", { textContent: t })),
+          );
+
           $(".sound-on", el).checked = s.muted === false;
           $(".fill-on", el).checked = !!s.fill;
-          // With sound ticked, say whether the page is actually making any.
-          $(".sound-state", el).textContent =
-            s.muted !== false
+          $(".state-note", el).textContent =
+            s.muted !== false || d.mode !== "page"
               ? ""
               : s.audible
-                ? "· sound is playing"
-                : "· the page is silent";
+                ? "playing"
+                : `the ${isSrt(s.url) ? "stream" : "page"} is silent`;
 
           // Only offer what makes sense for what the screen is doing.
           const page = d.mode === "page";
+          const restore = $("[data-act=restore]", el);
+          restore.hidden = page || !card.lastShown || !s.connected;
+          if (!restore.hidden)
+            restore.textContent = `Bring back ${describeSource(card.lastShown).title}`;
+          $("[data-act=source]", el).hidden = !s.connected;
           $("[data-act=reload]", el).hidden = !page || !s.connected;
           $("[data-act=remote]", el).hidden = !page || !s.connected;
-          $("[data-act=black]", el).hidden = d.mode === "black";
+          $("[data-act=black]", el).hidden = d.mode === "black" || !s.connected;
           $("[data-act=off]", el).hidden = d.mode === "unused";
           $("[data-act=forget]", el).hidden = s.connected;
-          $(".sound", el).hidden = !page;
-          $(".fill", el).hidden = !page || /^srt:/i.test(s.url); // mpv always fills the screen
+          $(".more", el).hidden = !s.connected;
+          $(".switches", el).hidden = !page;
+          $(".fill", el).hidden = isSrt(s.url); // a stream always fills the screen
         }
       }
+
+      // ---- Pictures of each screen, while this page is being looked at ----
+
+      function setPicture(card, blob) {
+        const img = $(".glass img", card.el);
+        if (img.src) URL.revokeObjectURL(img.src);
+        if (!blob) {
+          img.removeAttribute("src");
+          img.hidden = true;
+          return;
+        }
+        img.src = URL.createObjectURL(blob);
+        img.hidden = false;
+      }
+
+      // One screen at a time, every few seconds. The laptop hands the same
+      // picture to every open control page, so more viewers cost it nothing extra.
+      async function refreshPictures() {
+        if (!signedOut && document.visibilityState === "visible" && !remoteKey)
+          for (const card of [...cards.values()]) {
+            if (!card.live) continue;
+            try {
+              const res = await fetch(
+                "/api/snapshot?key=" + encodeURIComponent(card.key),
+                { headers: { "X-Token": token } },
+              );
+              if (res.ok && card.live) setPicture(card, await res.blob());
+            } catch {}
+          }
+        setTimeout(refreshPictures, 4000);
+      }
+
+      // ---- Changing what a screen shows ----
+
+      const sheet = $("#source");
+      let sheetKey = null;
+
+      function chooseKind(kind) {
+        $(`#source input[name=kind][value=${kind}]`).checked = true;
+        for (const part of $$("#source [data-kind]"))
+          part.hidden = part.dataset.kind !== kind;
+        say($("#source-error"), "");
+      }
+
+      function fillWeb(url) {
+        $("#web-url").value = url || "";
+        $("#web-name").value = (url && names[url]) || "";
+      }
+
+      function fillSrt(url) {
+        let f = {
+          mode: "caller",
+          host: "",
+          port: "",
+          latency: 200,
+          passphrase: "",
+          streamid: "",
+        };
+        if (isSrt(url))
+          try {
+            f = parseSrt(url);
+          } catch {}
+        $(`#srt-form input[name=srt-mode][value=${f.mode}]`).checked = true;
+        $("#srt-host").value = f.mode === "listener" ? "" : f.host;
+        $("#srt-port").value = f.port;
+        $("#srt-latency").value = f.latency;
+        $("#srt-pass").value = f.passphrase;
+        $("#srt-streamid").value = f.streamid;
+        $("#srt-name").value = (url && names[url]) || "";
+        $(".extra", $("#srt-form")).open = !!f.streamid;
+        srtChanged();
+      }
+
+      function openSource(key) {
+        const card = cards.get(key);
+        const s = lastState.screens.find((x) => x.key === key);
+        sheetKey = key;
+        $("#source-title").textContent = `What should ${card.title} show?`;
+        for (const b of $$("#source .show-on"))
+          b.textContent = `Show on ${card.title}`;
+        fillWeb(isSrt(s.url) ? "" : s.url);
+        fillSrt(isSrt(s.url) ? s.url : "");
+        $("#saved-search").value = "";
+        shownSaved = null;
+        renderSaved();
+        chooseKind(isSrt(s.url) ? "srt" : savedUrls.length ? "saved" : "web");
+        sheet.showModal();
+        if (!savedUrls.length || isSrt(s.url)) return;
+        $("#saved-search").focus();
+      }
+
+      // Shows a source on the open sheet's screen, names it if a name was given, and closes.
+      async function showSource(url, name) {
+        const key = sheetKey;
+        const where = $("#source-error");
+        if (!(await act("screen", { key, url }, where))) return;
+        const shown = lastState.screens.find((s) => s.key === key)?.url;
+        if (name && shown && names[shown] !== name)
+          if (!(await act("name", { url: shown, name }, where))) return;
+        sheet.close();
+      }
+
+      $$("#source input[name=kind]").forEach((r) =>
+        r.addEventListener("change", () => chooseKind(r.value)),
+      );
+      $("#web-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        showSource($("#web-url").value, $("#web-name").value.trim());
+      });
+
+      // The SRT form: reads its fields, checks them, and previews the address.
+      const srtFields = () => ({
+        mode: $("#srt-form input[name=srt-mode]:checked").value,
+        host: $("#srt-host").value,
+        port: $("#srt-port").value.trim(),
+        latency: $("#srt-latency").value,
+        passphrase: $("#srt-pass").value,
+        streamid: $("#srt-streamid").value.trim(),
+      });
+      function srtProblem(f) {
+        if (f.mode === "caller" && !f.host.trim())
+          return "Enter the sender's address.";
+        if (!/^\d+$/.test(f.port) || f.port < 1 || f.port > 65535)
+          return "Enter the port, a number from 1 to 65535.";
+        if (!(f.latency >= 20 && f.latency <= 8000))
+          return "Latency must be between 20 and 8000 ms.";
+        if (
+          f.passphrase &&
+          (f.passphrase.length < 10 || f.passphrase.length > 79)
+        )
+          return "The passphrase must be 10 to 79 characters, or left empty.";
+        return "";
+      }
+      function srtChanged() {
+        const f = srtFields();
+        const listener = f.mode === "listener";
+        $("#srt-host-field").hidden = listener;
+        $("#srt-port-label").textContent = listener
+          ? "Port to listen on"
+          : "Port";
+        $(".pair", $("#srt-form")).style.gridTemplateColumns = listener
+          ? "1fr"
+          : "";
+        for (const chip of $$("#srt-latency-chips button"))
+          chip.setAttribute(
+            "aria-pressed",
+            String(chip.dataset.ms === String(f.latency)),
+          );
+        const problem = srtProblem(f);
+        $("#srt-preview").textContent = problem
+          ? problem
+          : hidePassphrase(buildSrt(f));
+      }
+      $("#srt-form").addEventListener("input", srtChanged);
+      $("#srt-form").addEventListener("change", srtChanged);
+      // A whole srt:// address pasted into the address box fills in every field.
+      $("#srt-host").addEventListener("input", (e) => {
+        const text = e.target.value.trim();
+        if (!isSrt(text)) return;
+        const name = $("#srt-name").value;
+        fillSrt(text);
+        $("#srt-name").value = name;
+      });
+      $("#srt-latency-chips").addEventListener("click", (e) => {
+        const ms = e.target.closest("button")?.dataset.ms;
+        if (!ms) return;
+        $("#srt-latency").value = ms;
+        srtChanged();
+      });
+      $("#srt-pass-show").addEventListener("click", (e) => {
+        const box = $("#srt-pass");
+        const show = box.type === "password";
+        box.type = show ? "text" : "password";
+        e.target.textContent = show ? "Hide" : "Show";
+        e.target.setAttribute("aria-pressed", String(show));
+      });
+      $("#srt-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const f = srtFields();
+        const problem = srtProblem(f);
+        if (problem) return say($("#source-error"), problem);
+        showSource(buildSrt(f), $("#srt-name").value.trim());
+      });
+
+      // The saved list: redrawn only when it changes, and left alone while a name is being typed.
+      let shownSaved = null;
+      let naming = false;
+      function renderSaved() {
+        if (naming || !sheetKey || !lastState) return;
+        const typed = $("#saved-search")
+          .value.toLowerCase()
+          .split(/\s+/)
+          .filter(Boolean);
+        const showing = lastState.screens.filter((s) => s.connected && s.url);
+        const signature = JSON.stringify([
+          savedUrls,
+          names,
+          typed,
+          showing.map((s) => [s.key, s.url, s.title]),
+        ]);
+        if (signature === shownSaved) return;
+        shownSaved = signature;
+        const current = showing.find((s) => s.key === sheetKey)?.url;
+        const urls = savedUrls.filter((u) => {
+          const text = `${names[u] || ""} ${hidePassphrase(u)}`.toLowerCase();
+          return typed.every((w) => text.includes(w));
+        });
+        say(
+          $("#saved-empty"),
+          urls.length
+            ? ""
+            : savedUrls.length
+              ? "Nothing saved matches that."
+              : "Nothing saved yet. Choose Web page or SRT stream to show something; it is saved here for next time.",
+        );
+        $("#saved-clear").hidden = !savedUrls.length;
+        $("#saved-hint").hidden = !savedUrls.length;
+        $("#saved-list").replaceChildren(
+          ...urls.map((url) => {
+            const src = describeSource(url);
+            const on = showing.filter((s) => s.url === url).map((s) => s.title);
+            const li = make("li", {
+              className: url === current ? "current" : "",
+            });
+            const pick = make(
+              "button",
+              { type: "button", className: "pick", title: hidePassphrase(url) },
+              make("span", { className: "kind", textContent: src.kind }),
+              make("strong", { textContent: src.title }),
+              make("span", {
+                className: "where",
+                textContent: src.detail || hidePassphrase(url),
+              }),
+            );
+            if (on.length)
+              pick.append(
+                make("span", {
+                  className: "on",
+                  textContent: `On ${on.join(", ")}`,
+                }),
+              );
+            pick.addEventListener("click", () => showSource(url));
+            const tool = (text, label, onClick) => {
+              const b = make(
+                "button",
+                { type: "button", className: "quiet" },
+                make("span", { textContent: text }),
+              );
+              b.setAttribute("aria-label", `${label} ${src.title}`);
+              b.title = label;
+              b.addEventListener("click", onClick);
+              return b;
+            };
+            const form = make("form", { hidden: true });
+            const box = make("input", {
+              type: "text",
+              maxLength: 60,
+              placeholder: "For example: MPRO multiviewer",
+            });
+            box.setAttribute("aria-label", `Name for ${src.title}`);
+            form.append(
+              box,
+              make("button", { className: "primary", textContent: "Save" }),
+              tool("Cancel", "Stop renaming", () => naming && editing(false)),
+            );
+            const editing = (yes) => {
+              naming = yes;
+              form.hidden = !yes;
+              if (yes) {
+                box.value = names[url] || "";
+                box.focus();
+              } else shownSaved = null;
+            };
+            form.addEventListener("submit", (e) => {
+              e.preventDefault();
+              naming = false;
+              act("name", { url, name: box.value }, $("#source-error"));
+            });
+            li.append(
+              pick,
+              make(
+                "div",
+                { className: "item-tools" },
+                tool("Edit", "Change the settings of", () => {
+                  if (isSrt(url)) {
+                    fillSrt(url);
+                    chooseKind("srt");
+                  } else {
+                    fillWeb(url);
+                    chooseKind("web");
+                  }
+                }),
+                tool("Rename", "Rename", () => editing(true)),
+                tool("Remove", "Remove from saved:", () =>
+                  act("history", { url }, $("#source-error")),
+                ),
+              ),
+              form,
+            );
+            return li;
+          }),
+        );
+      }
+      $("#saved-search").addEventListener("input", renderSaved);
+      $("#saved-clear").addEventListener("click", () =>
+        act("history", { all: true }, $("#source-error")),
+      );
+      sheet.addEventListener("close", () => {
+        sheetKey = null;
+        naming = false;
+        $("#srt-pass").type = "password";
+        $("#srt-pass-show").textContent = "Show";
+      });
+
+      // ---- Settings ----
 
       let updateBusy = ""; // what is going on right now, shown in place of the result
       function renderUpdate(state) {
@@ -1004,23 +2025,20 @@
       function renderSettings(state) {
         renderUpdate(state);
         const net = state.network;
-        const all = net.listening === ALL;
-        const hosts = all
-          ? net.addresses.map((a) => a.address)
-          : [net.listening];
+        const hosts =
+          net.listening === ALL
+            ? net.addresses.map((a) => a.address)
+            : [net.listening];
         $("#urls").replaceChildren(
           ...hosts.map((h) => {
-            const li = document.createElement("li");
             const url = `http://${h}:${net.port}`;
-            li.append(
-              Object.assign(document.createElement("a"), {
-                href: url,
-                textContent: url,
-              }),
-            );
             const adaptor = net.addresses.find((a) => a.address === h);
-            if (adaptor) li.append(` (${adaptor.name})`);
-            return li;
+            return make(
+              "li",
+              {},
+              make("a", { href: url, textContent: url }),
+              adaptor ? ` (${adaptor.name})` : "",
+            );
           }),
         );
         say(
@@ -1029,17 +2047,13 @@
             ? ""
             : `The chosen address ${net.chosen} is not on this machine at the moment, so the page is answering on every address instead.`,
         );
-
         // Rebuild the list only when the addresses change, so an open menu is not disturbed.
         const select = $("#listen");
         const signature = JSON.stringify([net.addresses, net.chosen]);
         if (signature !== lastAddresses) {
           lastAddresses = signature;
           const option = (value, text) =>
-            Object.assign(document.createElement("option"), {
-              value,
-              textContent: text,
-            });
+            make("option", { value, textContent: text });
           const options = [
             option(ALL, `Every address (${ALL})`),
             ...net.addresses.map((a) =>
@@ -1053,7 +2067,6 @@
             options.push(option(net.chosen, `${net.chosen} (not available)`));
           select.replaceChildren(...options);
           select.value = net.chosen;
-          // Someone who already narrowed it to one address sees the choice straight away.
           if (net.chosen !== ALL) showListenForm(true);
           $("#listen-change").textContent =
             net.chosen === ALL
@@ -1063,138 +2076,11 @@
         select.dataset.chosen = net.chosen;
         select.dataset.port = net.port;
         $("#listen-apply").disabled = select.value === net.chosen;
-
         $("#token-section").hidden = !state.token;
         $("#open-access").hidden = !!state.token;
         $("#token-show").textContent = state.token || "";
       }
 
-      // Redrawn only when it changes, so a button being pressed is not replaced under the finger.
-      let historyUrls = [];
-      let pageNames = {};
-      let shownHistory = null;
-      let naming = false; // a name is being typed: leave the list alone until it is saved or cancelled
-      function renderHistory(state) {
-        if (naming) return;
-        const urls = (historyUrls = state.recent);
-        pageNames = state.names;
-        const screens = state.screens
-          .filter((s) => s.connected)
-          .map((s) => ({ key: s.key, title: s.title, url: s.url }));
-        const signature = JSON.stringify([urls, screens, pageNames]);
-        if (signature === shownHistory) return;
-        shownHistory = signature;
-        const list = $("#history-list");
-        const buttons = () => [...list.querySelectorAll("button")];
-        const focused = buttons().indexOf(document.activeElement);
-
-        $("#history-note").textContent = urls.length
-          ? "Every web page that has been shown. Give one a name to find it easily; click it to see the full address."
-          : "No web pages have been shown yet.";
-        $("#history-clear").hidden = !urls.length;
-        const button = (text, label, onClick) => {
-          const b = Object.assign(document.createElement("button"), {
-            type: "button",
-            textContent: text,
-          });
-          b.setAttribute("aria-label", label);
-          b.addEventListener("click", onClick);
-          return b;
-        };
-        list.replaceChildren(
-          ...urls.map((url) => {
-            const li = document.createElement("li");
-            const where = addressLabel(url);
-            const details = document.createElement("details");
-            const summary = document.createElement("summary");
-            summary.append(where);
-            details.append(
-              summary,
-              Object.assign(document.createElement("p"), {
-                className: "full",
-                textContent: url,
-              }),
-            );
-            const row = Object.assign(document.createElement("div"), {
-              className: "row",
-            });
-            if (screens.length)
-              row.append(
-                Object.assign(document.createElement("span"), {
-                  className: "dim",
-                  textContent: "Use on",
-                }),
-              );
-            for (const s of screens) {
-              const showing = s.url === url;
-              const b = button(
-                s.title + (showing ? " ✓" : ""),
-                showing
-                  ? `Showing on ${s.title}`
-                  : `Use on ${s.title}: ${where.firstChild.textContent}`,
-                () => act("screen", { key: s.key, url }, $("#history-error")),
-              );
-              if (showing) b.className = "primary";
-              row.append(b);
-            }
-            const remove = button(
-              "Remove",
-              `Remove ${where.firstChild.textContent} from the history`,
-              () => act("history", { url }, $("#history-error")),
-            );
-            remove.className = "link";
-
-            // Naming: a link that turns into a small form in the same row.
-            const form = Object.assign(document.createElement("form"), {
-              className: "row",
-              hidden: true,
-            });
-            const box = Object.assign(document.createElement("input"), {
-              type: "text",
-              maxLength: 60,
-              placeholder: "For example: MPRO multiviewer",
-            });
-            box.setAttribute("aria-label", "Name for this page");
-            const save = Object.assign(document.createElement("button"), {
-              className: "primary",
-              textContent: "Save",
-            });
-            const editing = (on) => {
-              naming = on;
-              form.hidden = !on;
-              row.hidden = on;
-              if (on) {
-                box.value = pageNames[url] || "";
-                box.focus();
-              } else rename.focus();
-            };
-            const rename = button(
-              pageNames[url] ? "Rename" : "Name",
-              `Name ${where.firstChild.textContent}`,
-              () => editing(true),
-            );
-            rename.className = "link rename";
-            form.append(
-              box,
-              save,
-              button("Cancel", "Cancel", () => editing(false)),
-            );
-            form.addEventListener("submit", (e) => {
-              e.preventDefault();
-              naming = false; // let the saved name be drawn
-              act("name", { url, name: box.value }, $("#history-error"));
-            });
-
-            row.append(rename, remove);
-            li.append(details, row, form);
-            return li;
-          }),
-        );
-        // Keep the keyboard where it was after the list is redrawn.
-        if (focused >= 0) (buttons()[focused] || $("#close-history")).focus();
-      }
-
-      let lastState = null;
       function render(state) {
         // The app was updated while this tab was open: fetch the new page to match it.
         if (loadedVersion && loadedVersion !== state.version)
@@ -1202,15 +2088,16 @@
         loadedVersion = state.version;
         // Keep the token this browser holds in step, for example after it is changed here.
         if (state.token && state.token !== token) setToken(state.token);
-        showSignedOut(false);
-        $("#host").textContent =
-          `${state.host} · version ${state.version}` +
-          (state.downloadMbps === null
-            ? ""
-            : ` · laptop downloading ${state.downloadMbps.toFixed(1)} Mbit/s`);
-        renderHistory(state);
         lastState = state;
+        savedUrls = state.recent;
+        names = state.names;
+        showSignedOut(false);
+        $("#host").textContent = `${state.host}, version ${state.version}`;
+        if (state.downloadMbps !== null)
+          $("#download").textContent =
+            `${state.downloadMbps.toFixed(1)} Mbit/s`;
         renderScreens(state);
+        renderSaved();
         renderSettings(state);
       }
 
@@ -1249,34 +2136,44 @@
         }
       });
 
+      // Every dialog's Close button.
+      for (const b of $$("dialog [data-close]"))
+        b.addEventListener("click", () => b.closest("dialog").close());
+
       // ---- Remote control: a picture of one screen that passes mouse moves and clicks on to it ----
       let remoteKey = null;
       const picture = $("#remote-picture");
-      async function refreshPicture() {
+      async function refreshRemote() {
         const key = remoteKey;
         try {
           const res = await fetch(
             "/api/snapshot?key=" + encodeURIComponent(key),
-            { headers: { "X-Token": token } },
+            {
+              headers: { "X-Token": token },
+            },
           );
           if (!res.ok) throw new Error((await res.json()).error);
           const url = URL.createObjectURL(await res.blob());
           if (key !== remoteKey) return URL.revokeObjectURL(url);
-          URL.revokeObjectURL(picture.src);
+          if (picture.src) URL.revokeObjectURL(picture.src);
           picture.src = url;
           say($("#remote-error"), "");
         } catch (e) {
           if (key === remoteKey) say($("#remote-error"), e.message);
         }
-        if (key === remoteKey) setTimeout(refreshPicture, 1000);
+        if (key === remoteKey) setTimeout(refreshRemote, 1000);
       }
       function openRemote(key, title) {
+        const s = lastState.screens.find((x) => x.key === key);
         remoteKey = key;
         $("#remote-title").textContent = title;
+        $("#remote-hint").textContent = isSrt(s?.url)
+          ? "What the stream is showing, updated about once a second."
+          : "Move over the picture and click to use the buttons on the page. It updates about once a second.";
         picture.removeAttribute("src");
         say($("#remote-error"), "");
         $("#remote").showModal();
-        refreshPicture();
+        refreshRemote();
       }
       const sendPointer = (e, click) => {
         const box = picture.getBoundingClientRect();
@@ -1299,28 +2196,11 @@
         sendPointer(e, false);
       });
       picture.addEventListener("click", (e) => sendPointer(e, true));
-      $("#close-remote").addEventListener("click", () => $("#remote").close());
       $("#remote").addEventListener("close", () => {
         // Take the mouse off the page, so its controls fade away again.
         act("pointer", { key: remoteKey, leave: true }, $("#remote-error"));
         remoteKey = null;
       });
-
-      // ---- History ----
-      $("#history").addEventListener("close", () => {
-        naming = false;
-        shownHistory = null; // redraw, in case a name was half typed
-      });
-      $("#open-history").addEventListener("click", () => {
-        say($("#history-error"), "");
-        $("#history").showModal();
-      });
-      $("#close-history").addEventListener("click", () =>
-        $("#history").close(),
-      );
-      $("#history-clear").addEventListener("click", () =>
-        act("history", { all: true }, $("#history-error")),
-      );
 
       // ---- Settings ----
       const settingsError = $("#settings-error");
@@ -1359,13 +2239,9 @@
           "Downloading and installing. This page reloads when the new version is running…",
         ),
       );
-      $("#close-settings").addEventListener("click", () =>
-        $("#settings").close(),
-      );
       $("#listen-change").addEventListener("click", () => showListenForm(true));
       $("#token-change").addEventListener("click", () => showTokenForm(true));
       $("#token-cancel").addEventListener("click", () => showTokenForm(false));
-
       $("#listen").addEventListener("change", (e) => {
         $("#listen-apply").disabled =
           e.target.value === e.target.dataset.chosen;
@@ -1388,10 +2264,13 @@
           );
         }
       });
-
       $("#token-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         if (await act("token", { token: $("#token-new").value }, settingsError))
+          showTokenForm(false);
+      });
+      $("#token-generate").addEventListener("click", async () => {
+        if (await act("token", { generate: true }, settingsError))
           showTokenForm(false);
       });
       $("#log-download").addEventListener("click", async () => {
@@ -1400,7 +2279,7 @@
             headers: { "X-Token": token },
           });
           if (!res.ok) throw new Error((await res.json()).error);
-          const link = Object.assign(document.createElement("a"), {
+          const link = make("a", {
             href: URL.createObjectURL(await res.blob()),
             download: "screen-wall.log",
           });
@@ -1410,12 +2289,15 @@
           say(settingsError, e.message);
         }
       });
-      $("#token-generate").addEventListener("click", async () => {
-        if (await act("token", { generate: true }, settingsError))
-          showTokenForm(false);
+
+      // Close a screen's More menu when clicking anywhere else.
+      document.addEventListener("click", (e) => {
+        for (const d of $$("details.more[open]"))
+          if (!d.contains(e.target)) d.open = false;
       });
 
       poll();
+      setTimeout(refreshPictures, 300); // once the first poll has drawn the screens
     </script>
   </body>
 </html>

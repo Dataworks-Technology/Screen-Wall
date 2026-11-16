@@ -22,6 +22,19 @@ function validateUrl(input) {
   }
   if (!["http:", "https:", "srt:"].includes(url.protocol))
     throw badRequest("Only http, https and srt addresses are allowed");
+  // Caught here rather than left to fail on the screen as a stream that never starts.
+  if (url.protocol === "srt:") {
+    if (!url.hostname || !url.port)
+      throw badRequest(
+        "An SRT address needs a host and a port, like srt://192.0.2.10:9000",
+      );
+    const passphrase = url.searchParams.get("passphrase");
+    if (
+      passphrase !== null &&
+      (passphrase.length < 10 || passphrase.length > 79)
+    )
+      throw badRequest("An SRT passphrase must be 10 to 79 characters long");
+  }
   return url.href;
 }
 

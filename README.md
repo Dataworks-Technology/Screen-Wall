@@ -8,51 +8,59 @@ It is one Electron app: Chromium renders each output in its own borderless full-
 
 1. Install Screen Wall on the laptop (see Installing on Windows); it starts by itself. Nothing appears on any screen yet.
 2. On any device on the same network, open `http://<laptop address>:8080` and enter the token. The token is shown on the same page when it is opened on the laptop itself (see Settings).
-3. Press **Identify screens**. Each screen shows its name for a few seconds, so you can tell which card is which output. Use **Rename** to call them something useful ("Stage left").
-4. Type or paste an address under **Web page to show** and press **Show**.
+3. Press **Identify screens**. Each screen shows its name for a few seconds, so you can tell which monitor on the page is which output. Use **More → Rename screen** to call them something useful ("Stage left").
+4. Press **Change what's showing** under a screen, choose **Web page** or **SRT stream**, fill it in and press **Show on …**.
 
-Each card says what its screen is doing (Showing, Loading, Retrying, Black, Not in use, Unplugged) and what is on it now.
+The control page is laid out like a monitor wall. Each screen has a live picture of what it is showing (refreshed every few seconds while the page is open), and a strip under it with its name and a tally lamp: green when showing, amber while loading, red when unplugged or retrying, grey when black or not in use.
 
 | Control                        | What it does                                                                                                                        |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Show                           | Shows the web page full screen. `https://` is added if you leave it out.                                                            |
-| Reload page                    | Loads the page again.                                                                                                               |
-| Black screen                   | Keeps the screen covered, showing black.                                                                                            |
-| Stop showing                   | Closes the page and lets the laptop's desktop show on that screen.                                                                  |
-| Play sound                     | Every screen starts silent. Tick it on the one that should carry sound.                                                             |
+| Change what's showing          | Picks a saved source, a web page or an SRT stream for the screen. `https://` is added to a web address if you leave it out.         |
+| Black                          | Covers the screen with black. **Bring back …** then puts back what was on it.                                                       |
+| Reload                         | Loads the page, or restarts the stream, again.                                                                                      |
+| Remote                         | Remote control: see the screen, and click on its page (below).                                                                      |
+| More → Rename screen           | Names the screen. The name appears on its strip and when identifying.                                                               |
+| More → Stop showing            | Closes the page and lets the laptop's desktop show on that screen.                                                                  |
+| Sound                          | Every screen starts silent. Switch it on for the one that should carry sound.                                                       |
 | Fill the screen with the video | For a page that is a video player: puts its video into full screen, as the player's own button would, and again after every reload. |
-| Rename                         | Names the screen. The name appears on the card and when identifying.                                                                |
-| Forget                         | Removes an unplugged screen that still has a page saved against it.                                                                 |
+| Forget this screen             | Removes an unplugged screen that still has a source saved against it.                                                               |
 
-**Remote control** (on a card that is showing a page) opens a picture of that screen, updated about once a second. Moving over the picture and clicking does the same on the page, which is how you press a page's own full-screen or play button from another device. It passes on the mouse only, not the keyboard.
+**Saved** (the first choice under Change what's showing) lists everything that has been shown, newest first. Press one to put it on the screen. Type to narrow the list by name or any part of the address. **Rename** gives a source a name of your own ("MPRO multiviewer"), shown in place of its address; a name can also be given when adding a web page or stream. **Edit** opens a saved source in its form, to change, say, a stream's latency. **Remove** takes one off the list and **Clear all** empties it; what is on a screen is not affected. This replaces the History window and its **Use on** buttons of earlier versions.
+
+**Remote** opens a picture of that screen, updated about once a second. Moving over the picture and clicking does the same on the page, which is how you press a page's own full-screen or play button from another device. It passes on the mouse only, not the keyboard.
 
 On the laptop itself the mouse works on the pages directly. The pointer is hidden while it is still, and comes back for three seconds whenever the mouse moves.
 
-**Play sound** is the one switch for a screen's sound. Unticked, the screen is silent whatever the page does. Ticked, the app also unmutes the page's own player within ten seconds, and again after every reload, so nobody has to click the player's mute button. Sound comes out of whichever output Windows has set as its default, not necessarily the monitor the page is on. Next to the tick the card says whether the page is making sound at that moment: `sound is playing` with nothing to hear means the sound is going to a different output, so change the default output in Windows sound settings; `the page is silent` means the page or its feed has no sound to give.
+**Sound** is the one switch for a screen's sound. Off, the screen is silent whatever the page does. On, the app also unmutes the page's own player within ten seconds, and again after every reload, so nobody has to click the player's mute button. Sound comes out of whichever output Windows has set as its default, not necessarily the monitor the page is on. Next to the switch the screen says whether it is making sound at that moment: `playing` with nothing to hear means the sound is going to a different output, so change the default output in Windows sound settings; `the page is silent` means the page or its feed has no sound to give.
 
-A card showing a live video feed says how fast that video is arriving (`video arriving at 6.2 Mbit/s`), measured over the last ten seconds. This counts WebRTC video and sound only, not the rest of the page. The line under the title at the top gives the download rate of the whole laptop, including anything else running on it.
+A screen showing a live video feed says how fast that video is arriving (`Video arriving at 6.2 Mbit/s`), measured over the last ten seconds. For a page this counts WebRTC video and sound only, not the rest of the page. The top of the page gives the download rate of the whole laptop, including anything else running on it.
 
-Buttons only appear when they apply: a screen that is not in use offers just **Show** and **Black screen**.
+Buttons only appear when they apply: a screen that is not in use offers just **Change what's showing** and **Black**.
 
 **Settings** (top right) holds the things you rarely touch:
 
 - **Address:** the addresses other devices can open the page at. You can make it answer on one of them instead of all; doing so moves your browser to it. If the chosen address later disappears from the laptop (cable unplugged, new address from the router), the page answers on every address again until it comes back, so it cannot be set out of reach.
 - **Access token:** shows the token, and lets you change it to one of your own or a new random one. Every other device is then asked for the new token.
+- **Updates** and **Fault log** (see below).
 
-**History** (top right) lists every web page that has been shown. Each has a **Use on** button per screen, which puts that page on the screen straight away. Addresses are shortened to fit; click one to see it in full. **Name** gives a page a name of your own ("MPRO multiviewer"), which is then shown in place of its address. Remove one, or clear them all; pages currently on a screen are not affected.
-
-The same history appears under a card's **Web page to show** box when you click in it, and narrows as you type. Typing matches a page's name and any part of its address, so `multiviewer mpro` finds the multiviewer page for that division. Pick one, then press **Show**.
+To reach the app on the laptop itself, start it a second time: it offers to open the control page or quit.
 
 ### SRT streams
 
-A screen can show an SRT stream instead of a web page: paste its `srt://` address into **Web page or SRT stream to show**, e.g. `srt://203.0.113.7:9000?mode=caller&latency=200000&passphrase=…`. The app plays it with mpv, a video player that comes with the installer, full screen on that display. **Play sound** and **Remote control** (the picture only; clicks do nothing) work as for a page.
+Choose **SRT stream** under **Change what's showing** and fill in:
 
-- The address uses FFmpeg's SRT options, which are not always VLC's: `latency` is in microseconds (200000 = 200 ms), and `passphrase` must be 10 to 79 characters.
-- In listener mode (`srt://0.0.0.0:9000?mode=listener`), Windows Firewall asks once to let `screen-wall-player.exe` receive connections. Allow it on private networks.
-- A stream that drops, freezes for 30 seconds, or shows nothing for a minute is started again: after 2s, 4s, 8s, 16s, then every 30s. Each time is written to the log, with any passphrase hidden.
+- **How it connects:** _Connect to the sender_ (caller) when the sender is waiting at an address you know; _Wait for the sender to connect_ (listener) when the sender is set to send to the laptop. In listener mode Windows Firewall asks once to let `screen-wall-player.exe` receive connections; allow it on private networks.
+- **Sender address** and **Port**, or just the port to listen on.
+- **Latency** in milliseconds, 200 unless you know better. More rides out a poor network but delays the picture; SRT uses the higher of this and the sender's setting.
+- **Passphrase** if the stream is encrypted: 10 to 79 characters, exactly as on the sender. It is never shown on the control page or written to the log.
+- **Stream ID** under More options, only if the sender asks for one.
+
+Pasting a whole `srt://` address into Sender address fills in every field. An address copied from VLC works too: its latency is in milliseconds, FFmpeg's in microseconds, and the form tells them apart.
+
+The app plays the stream with mpv, a video player that comes with the installer, full screen on that display. **Sound** and **Remote** (the picture only; clicks do nothing) work as for a page.
+
+- A stream that drops, freezes for 30 seconds, or shows no picture for a minute is started again: after 2s, 4s, 8s, 16s, then every 30s. Each time is written to the log, with any passphrase hidden.
 - The player is mpv, licensed under the GPL; see `player/README.txt` for its source.
-
-To reach the app on the laptop itself, start it a second time: it offers to open the control page or quit.
 
 ## What keeps it running
 
@@ -148,18 +156,19 @@ The Windows installer can only be built on Windows, or on a machine with Wine.
 
 ## Code
 
-| File         | What it holds                                                               |
-| ------------ | --------------------------------------------------------------------------- |
-| `main.js`    | Start-up: single instance, the local dialog, page lock-down.                |
-| `config.js`  | Settings (`config.json`) and the fault log.                                 |
-| `screens.js` | The windows on the displays, their recovery, and matching displays.         |
-| `server.js`  | The control page and its API. It only reaches windows through `screens.js`. |
-| `preload.js` | Runs in each page shown: keeps track of its WebRTC connections for the log. |
-| `updater.js` | Finds newer releases on GitHub and installs one when asked.                 |
-| `player.js`  | Plays SRT streams with mpv, inside a screen's window, and restarts them.    |
-| `lib.js`     | Pure logic (URL checks, display matching, retry timing), covered by tests.  |
-| `ui.html`    | The control page.                                                           |
-| `release.js` | Chooses the next version for the release workflow.                          |
+| File         | What it holds                                                                                  |
+| ------------ | ---------------------------------------------------------------------------------------------- |
+| `main.js`    | Start-up: single instance, the local dialog, page lock-down.                                   |
+| `config.js`  | Settings (`config.json`) and the fault log.                                                    |
+| `screens.js` | The windows on the displays, their recovery, and matching displays.                            |
+| `server.js`  | The control page and its API. It only reaches windows through `screens.js`.                    |
+| `preload.js` | Runs in each page shown: keeps track of its WebRTC connections for the log.                    |
+| `updater.js` | Finds newer releases on GitHub and installs one when asked.                                    |
+| `player.js`  | Plays SRT streams with mpv, inside a screen's window, and restarts them.                       |
+| `fonts/`     | Nunito Sans and Outfit, the Dataworks typefaces, for the control page (SIL Open Font License). |
+| `lib.js`     | Pure logic (URL checks, display matching, retry timing), covered by tests.                     |
+| `ui.html`    | The control page.                                                                              |
+| `release.js` | Chooses the next version for the release workflow.                                             |
 
 The installer is built with Electron's fuses set so the app cannot be run as plain Node or with debugging flags. Dependabot raises a pull request when Electron has an update; merge those promptly, since the app shows other people's web pages.
 
@@ -173,7 +182,7 @@ The code has no Windows-specific parts.
 ## Limits
 
 - Feeds protected by DRM (Widevine) will not play; stock Electron does not include it.
-- There is no remote way to click or type into a page, and the pointer is hidden over pages. Cookies are kept between runs, so a login done on the laptop with mouse and keyboard would persist, but that has not been tried. Prefer URLs that need no login.
+- Remote passes on the mouse only, so a page cannot be typed into from another device. Cookies are kept between runs, so a login done on the laptop with mouse and keyboard would persist, but that has not been tried. Prefer URLs that need no login.
 - A URL that is a file or raw stream (`.m3u8`, a download) rather than a web page shows "not a web page" and stays black.
 - Tested on Linux only so far. Placement across four HDMI outputs on Windows, mixed scaling between displays and the firewall prompt have not been run on the real laptop.
 
