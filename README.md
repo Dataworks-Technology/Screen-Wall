@@ -16,14 +16,14 @@ The control page is laid out like a monitor wall. Each screen has a live picture
 | Control                        | What it does                                                                                                                        |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Change what's showing          | Picks a saved source, a web page or an SRT stream for the screen. `https://` is added to a web address if you leave it out.         |
-| Black                          | Covers the screen with black. **Bring back …** then puts back what was on it.                                                       |
+| Black                          | Covers the screen with black. The button then reads **Bring back**, which puts back what was on it.                                 |
 | Reload                         | Loads the page, or restarts the stream, again.                                                                                      |
 | Remote                         | Remote control: see the screen, and click on its page (below).                                                                      |
 | More → Rename screen           | Names the screen. The name appears on its strip and when identifying.                                                               |
 | More → Stop showing            | Closes the page and lets the laptop's desktop show on that screen.                                                                  |
 | Sound                          | Every screen starts silent. Switch it on for the one that should carry sound.                                                       |
 | Fill the screen with the video | For a page that is a video player: puts its video into full screen, as the player's own button would, and again after every reload. |
-| Forget this screen             | Removes an unplugged screen that still has a source saved against it.                                                               |
+| More → Forget this screen      | Removes an unplugged screen that still has a source saved against it.                                                               |
 
 **Saved** (the first choice under Change what's showing) lists everything that has been shown, newest first. Press one to put it on the screen. Type to narrow the list by name or any part of the address. **Rename** gives a source a name of your own ("MPRO multiviewer"), shown in place of its address; a name can also be given when adding a web page or stream. **Edit** opens a saved source in its form, to change, say, a stream's latency. **Remove** takes one off the list and **Clear all** empties it; what is on a screen is not affected. This replaces the History window and its **Use on** buttons of earlier versions.
 
@@ -35,7 +35,7 @@ On the laptop itself the mouse works on the pages directly. The pointer is hidde
 
 A screen showing a live video feed says how fast that video is arriving (`Video arriving at 6.2 Mbit/s`), measured over the last ten seconds. For a page this counts WebRTC video and sound only, not the rest of the page. The top of the page gives the download rate of the whole laptop, including anything else running on it.
 
-Buttons only appear when they apply: a screen that is not in use offers just **Change what's showing** and **Black**.
+Every screen has the same controls in the same places, so they line up across the wall; those that do not apply at the moment are greyed out. A problem (unplugged, retrying) is written across the screen's picture.
 
 **Settings** (top right) holds the things you rarely touch:
 
