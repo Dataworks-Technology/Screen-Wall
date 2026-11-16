@@ -17,7 +17,7 @@ const EXE =
   (BUNDLED
     ? path.join(process.resourcesPath, "player", "screen-wall-player.exe")
     : "mpv");
-const STUCK_MS = 60000; // connected to nothing for this long: start again
+const STUCK_MS = 60000; // no picture position for this long: start again
 const FROZEN_CHECKS = 3; // the picture not moving for this many checks: start again
 const STEADY_MS = 60000; // a stream that played this long starts its retries from the beginning
 
@@ -39,6 +39,7 @@ function run(key, p) {
   p.started = Date.now();
   p.pos = null;
   p.still = 0;
+  p.seen = 0; // when the player last reported a picture position
   p.status = "loading";
   p.tail = "";
   // ponytail: mpv's default buffering, not its low-latency profile; a steady
@@ -75,7 +76,7 @@ function run(key, p) {
     p.proc = null;
     if (Date.now() - p.started > STEADY_MS) p.attempt = 0;
     const wait = backoffMs(p.attempt++);
-    p.status = "the stream stopped";
+    p.status = "no picture from the sender";
     log(
       `${key} stream ${why}; starting again in ${wait / 1000}s.`,
       hide(p.url),
@@ -123,9 +124,17 @@ function clearLeftovers() {
 }
 
 // Sends mpv one command over its control pipe; null if it does not answer.
+// One at a time per player: mpv's Windows pipe can turn away a second client
+// while it is still opening the next pipe instance.
 function ask(key, command) {
   const p = players.get(key);
   if (!p || !p.proc) return Promise.resolve(null);
+  return (p.queue = (p.queue || Promise.resolve()).then(() =>
+    send(p, command),
+  ));
+}
+
+function send(p, command) {
   return new Promise((done) => {
     const sock = net.connect(p.pipe);
     let text = "";
@@ -167,14 +176,17 @@ async function check(key) {
   ]);
   if (players.get(key) !== p || !p.proc) return;
   p.mbps = typeof speed === "number" ? (speed * 8) / 1e6 : null;
+  // No position: not playing yet, or one unanswered question. Only give up
+  // after a whole minute without one, so a single hiccup never cuts a picture.
   if (pos === null) {
-    p.status = "loading";
-    if (Date.now() - p.started > STUCK_MS) {
+    if (!p.seen) p.status = "loading";
+    if (Date.now() - (p.seen || p.started) > STUCK_MS) {
       log(`${key} stream showed nothing for ${STUCK_MS / 1000}s.`);
       p.proc.kill(); // the close handler starts it again
     }
     return;
   }
+  p.seen = Date.now();
   p.status = "ok";
   p.still = pos === p.pos ? p.still + 1 : 0;
   p.pos = pos;

@@ -20,6 +20,18 @@ test("validateUrl allows web pages and SRT streams only", () => {
     validateUrl("srt://203.0.113.7:9000?mode=caller&latency=200000"),
     "srt://203.0.113.7:9000?mode=caller&latency=200000",
   );
+  // A passphrase full of awkward characters arrives as it was typed.
+  const pass = "a&b+c%d e#12";
+  const srt = validateUrl(
+    `srt://0.0.0.0:9000?mode=listener&passphrase=${encodeURIComponent(pass)}`,
+  );
+  assert.equal(new URL(srt).searchParams.get("passphrase"), pass);
+  for (const bad of [
+    "srt://203.0.113.7",
+    "srt://203.0.113.7:9000?passphrase=short",
+    `srt://203.0.113.7:9000?passphrase=${"x".repeat(80)}`,
+  ])
+    assert.throws(() => validateUrl(bad), { status: 400 }, bad);
   assert.equal(
     validateUrl("http://192.168.1.5:3000"),
     "http://192.168.1.5:3000/",

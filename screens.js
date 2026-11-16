@@ -13,6 +13,7 @@ const PROBE_EVERY_MS = 10000;
 const HANG_MS = 15000;
 const STUCK_MS = 90000;
 const POINTER_IDLE_MS = 3000;
+const SHOT_MS = 1000;
 const FROZEN_PROBES = 3; // a live video showing no new frames for this many probes in a row is reloaded
 
 // Run inside every frame of a page: for each live video (a WebRTC or camera
@@ -558,17 +559,26 @@ function windowOf(key) {
 
 // A small JPEG of what a screen is showing, for the remote view.
 // Taken only when asked for, and never two at once for the same screen.
+// A picture under a second old is handed out again, so however many control
+// pages are open, each screen is captured at most about once a second.
 async function snapshot(key) {
   const r = windowOf(key);
   const s = findScreen(key);
+  if (r.lastShot && Date.now() - r.lastShot.at < SHOT_MS)
+    return r.lastShot.jpeg;
   r.shot ||= (
     player.isStream(s.url)
       ? player.snapshot(s.key)
       : r.win.webContents.capturePage()
-  ).finally(() => (r.shot = null));
-  const image = await r.shot;
-  if (image.isEmpty()) throw httpError(503, "No picture available yet");
-  return image.resize({ width: 960 }).toJPEG(70);
+  )
+    .then((image) => {
+      if (image.isEmpty()) throw httpError(503, "No picture available yet");
+      const jpeg = image.resize({ width: 960 }).toJPEG(70);
+      r.lastShot = { at: Date.now(), jpeg };
+      return jpeg;
+    })
+    .finally(() => (r.shot = null));
+  return r.shot;
 }
 
 // Moves the mouse over a screen's page from the remote view, and optionally clicks.
